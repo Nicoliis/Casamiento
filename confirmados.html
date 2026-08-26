@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de confirmaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { padding: 40px 16px 80px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  #gate { max-width: 380px; margin: 80px auto; text-align: center; }
+  #gate h1 { font-size: 1.6rem; color: var(--forest-deep); margin-bottom: 18px; }
+  #gate input { margin-bottom: 12px; }
+  #gate .btn { width: 100%; justify-content: center; }
+  #gate-error { margin-top: 10px; }
+
+  #panel h1 { font-size: 1.8rem; color: var(--forest-deep); margin-bottom: 24px; text-align: center; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  @media (min-width: 560px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+  .stat { text-align: center; padding: 18px 10px; }
+  .stat strong { display: block; font-size: 2rem; color: var(--forest); font-family: var(--serif); }
+  .stat span { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
+  h2 { font-size: 1.2rem; color: var(--forest); margin: 30px 0 12px; }
+
+  #diet-breakdown { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+  #diet-breakdown li {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    background: var(--white);
+    border: 1px solid var(--sage-light);
+    border-radius: 999px;
+    padding: 8px 16px;
+  }
+  #diet-breakdown li strong { color: var(--forest); }
+
+  .table-controls { display: flex; justify-content: flex-end; gap: 10px; margin: 20px 0 10px; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--sage-light); border-radius: var(--radius-sm); background: var(--white); }
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 0.88rem; min-width: 560px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--sage-light); white-space: nowrap; }
+  th { background: var(--cream-deep); color: var(--forest-deep); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.attend-yes { color: var(--ok); font-weight: 600; }
+  td.attend-no { color: var(--error); font-weight: 600; }
+
+  #comments-list { list-style: none; padding: 0; margin: 0; }
+  #comments-list li {
+    background: var(--white);
+    border: 1px solid var(--sage-light);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 10px;
+  }
+  #comments-list li strong { color: var(--forest); display: block; font-family: var(--sans); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px 0; font-family: var(--sans); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="gate">
+    <h1 id="gate-title"></h1>
+    <input type="password" id="admin-pass" autocomplete="off">
+    <button class="btn btn-primary" id="gate-btn"></button>
+    <div id="gate-error" class="status-msg error"></div>
+  </div>
+
+  <div id="panel" hidden>
+    <h1 id="panel-heading"></h1>
+
+    <div class="stats-grid">
+      <div class="card stat"><strong id="stat-parties">0</strong><span id="lbl-stat-parties"></span></div>
+      <div class="card stat"><strong id="stat-people">0</strong><span id="lbl-stat-people"></span></div>
+      <div class="card stat"><strong id="stat-attending">0</strong><span id="lbl-stat-attending"></span></div>
+      <div class="card stat"><strong id="stat-not-attending">0</strong><span id="lbl-stat-not-attending"></span></div>
+    </div>
+
+    <h2 id="diet-title"></h2>
+    <ul id="diet-breakdown"></ul>
+
+    <div class="table-controls">
+      <button class="btn btn-outline" id="export-csv-btn"></button>
+      <button class="btn btn-outline" id="refresh-btn"></button>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th id="th-group"></th>
+            <th id="th-name"></th>
+            <th id="th-attending"></th>
+            <th id="th-diet"></th>
+            <th id="th-updated"></th>
+          </tr>
+        </thead>
+        <tbody id="rsvp-tbody"></tbody>
+      </table>
+      <p class="empty" id="table-empty" hidden></p>
+    </div>
+
+    <h2 id="comments-title"></h2>
+    <ul id="comments-list"></ul>
+    <p class="empty" id="comments-empty" hidden></p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="content.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const C = CONTENT.admin;
+  const DIET_LABELS = CONTENT.rsvp.dietOptions;
+  const $ = (id) => document.getElementById(id);
+
+  let latestRsvps = null;
+  let sessionPassword = null;
+
+  function applyStaticText() {
+    $('gate-title').textContent = C.title;
+    $('admin-pass').placeholder = C.passwordPlaceholder;
+    $('gate-btn').textContent = C.enter;
+    $('panel-heading').textContent = C.heading;
+    $('lbl-stat-parties').textContent = C.statParties;
+    $('lbl-stat-people').textContent = C.statPeople;
+    $('lbl-stat-attending').textContent = C.statAttending;
+    $('lbl-stat-not-attending').textContent = C.statNotAttending;
+    $('diet-title').textContent = C.dietBreakdownTitle;
+    $('th-group').textContent = C.tableGroup;
+    $('th-name').textContent = C.tableName;
+    $('th-attending').textContent = C.tableAttending;
+    $('th-diet').textContent = C.tableDiet;
+    $('th-updated').textContent = C.tableUpdated;
+    $('export-csv-btn').textContent = C.exportCsv;
+    $('refresh-btn').textContent = C.refresh;
+    $('comments-title').textContent = C.commentsTitle;
+    $('table-empty').textContent = C.empty;
+    $('comments-empty').textContent = C.noComments;
+  }
+
+  function dietLabel(person) {
+    if (!person.diet || person.diet.length === 0) return '—';
+    return person.diet.map((key) => {
+      if (key === 'other' && person.dietOther) return DIET_LABELS.other + ': ' + person.dietOther;
+      return DIET_LABELS[key] || key;
+    }).join(', ');
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) {
+      return iso || '';
+    }
+  }
+
+  function render(rsvps) {
+    latestRsvps = rsvps;
+    const parties = Object.values(rsvps || {});
+    const allPeople = parties.flatMap((party) => party.people.map((p) => ({ ...p, group: party.label || party.guest, updatedAt: party.updatedAt })));
+
+    const attending = allPeople.filter((p) => p.attending);
+    const notAttending = allPeople.filter((p) => !p.attending);
+
+    $('stat-parties').textContent = parties.length;
+    $('stat-people').textContent = allPeople.length;
+    $('stat-attending').textContent = attending.length;
+    $('stat-not-attending').textContent = notAttending.length;
+
+    const dietCounts = {};
+    attending.forEach((p) => {
+      (p.diet || []).forEach((key) => {
+        const label = key === 'other' ? DIET_LABELS.other : (DIET_LABELS[key] || key);
+        dietCounts[label] = (dietCounts[label] || 0) + 1;
+      });
+    });
+    const dietEntries = Object.entries(dietCounts);
+    $('diet-breakdown').innerHTML = dietEntries.length
+      ? dietEntries.map(([label, count]) => '<li><strong>' + count + '</strong> ' + escapeHtml(label) + '</li>').join('')
+      : '<li>—</li>';
+
+    const tbody = $('rsvp-tbody');
+    tbody.innerHTML = '';
+    $('table-empty').hidden = allPeople.length > 0;
+    allPeople
+      .sort((a, b) => (a.group || '').localeCompare(b.group || ''))
+      .forEach((p) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + escapeHtml(p.group) + '</td>' +
+          '<td>' + escapeHtml(p.name) + '</td>' +
+          '<td class="' + (p.attending ? 'attend-yes' : 'attend-no') + '">' + (p.attending ? C.yes : C.no) + '</td>' +
+          '<td>' + escapeHtml(dietLabel(p)) + '</td>' +
+          '<td>' + escapeHtml(formatDate(p.updatedAt)) + '</td>';
+        tbody.appendChild(tr);
+      });
+
+    const commentsList = $('comments-list');
+    const withComments = parties.filter((p) => p.comments && p.comments.trim());
+    commentsList.innerHTML = withComments
+      .map((p) => '<li><strong>' + escapeHtml(p.label || p.guest) + '</strong>' + escapeHtml(p.comments) + '</li>')
+      .join('');
+    $('comments-empty').hidden = withComments.length > 0;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  async function fetchSummary(password) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'summary', key: password })
+    });
+    return res.json();
+  }
+
+  async function tryEnter(password) {
+    $('gate-error').textContent = '';
+    const result = await fetchSummary(password);
+    if (!result.ok) {
+      $('gate-error').textContent = C.wrongPassword;
+      return;
+    }
+    sessionPassword = password;
+    sessionStorage.setItem('weddingAdminPass', password);
+    $('gate').hidden = true;
+    $('panel').hidden = false;
+    render(result.rsvps);
+  }
+
+  function csvEscape(value) {
+    const str = String(value == null ? '' : value);
+    if (/[",\n]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+    return str;
+  }
+
+  function exportCsv() {
+    if (!latestRsvps) return;
+    const rows = [['Grupo', 'Nombre', 'Asiste', 'Restricciones', 'Comentarios', 'Actualizado']];
+    Object.values(latestRsvps).forEach((party) => {
+      party.people.forEach((p) => {
+        rows.push([
+          party.label || party.guest,
+          p.name,
+          p.attending ? C.yes : C.no,
+          dietLabel(p),
+          party.comments || '',
+          formatDate(party.updatedAt)
+        ]);
+      });
+    });
+    const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'confirmaciones.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyStaticText();
+
+    $('gate-btn').addEventListener('click', () => tryEnter($('admin-pass').value));
+    $('admin-pass').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); $('gate-btn').click(); }
+    });
+    $('refresh-btn').addEventListener('click', async () => {
+      if (!sessionPassword) return;
+      const result = await fetchSummary(sessionPassword);
+      if (result.ok) render(result.rsvps);
+    });
+    $('export-csv-btn').addEventListener('click', exportCsv);
+
+    const remembered = sessionStorage.getItem('weddingAdminPass');
+    if (remembered) {
+      $('admin-pass').value = remembered;
+      tryEnter(remembered);
+    }
+  });
+})();
+</script>
+</body>
+</html>

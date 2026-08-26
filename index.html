@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuestra Boda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { position: relative; }
+
+  #setup-warning {
+    position: relative;
+    z-index: 2;
+    background: #fff3ea;
+    border-bottom: 1px solid var(--gold);
+    color: #6b4a2c;
+    padding: 12px 20px;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
+  }
+
+  /* ---------- Nav ---------- */
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    gap: 26px;
+    padding: 14px 12px;
+    background: rgba(248, 245, 236, 0.85);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--sage-light);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .site-nav a { text-decoration: none; color: var(--forest); opacity: 0.75; }
+  .site-nav a:hover { opacity: 1; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 70px 20px 56px;
+    overflow: hidden;
+  }
+  .hero-ornament {
+    width: min(90vw, 380px);
+    height: auto;
+    color: var(--moss);
+    opacity: 0.55;
+    margin: 0 auto 8px;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    letter-spacing: 0.28em;
+    color: var(--moss);
+    margin: 0 0 10px;
+  }
+  .couple-names {
+    font-family: var(--script);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 9vw, 4.6rem);
+    color: var(--forest-deep);
+    line-height: 1.15;
+    margin: 0 0 14px;
+  }
+  .couple-names .amp { font-family: var(--serif); font-style: italic; font-size: 0.6em; color: var(--gold); padding: 0 6px; }
+  .hero-date {
+    font-family: var(--sans);
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    margin: 0 0 22px;
+  }
+  .hero-welcome {
+    max-width: 480px;
+    margin: 0 auto 30px;
+    color: var(--ink);
+    font-size: 1.12rem;
+  }
+
+  /* ---------- Cuenta regresiva ---------- */
+  .countdown-label {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .countdown {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 34px;
+    flex-wrap: wrap;
+  }
+  .cd-box {
+    background: var(--white);
+    border: 1px solid var(--sage-light);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    min-width: 66px;
+    box-shadow: var(--shadow-soft);
+  }
+  .cd-box strong { display: block; font-family: var(--serif); font-size: 1.7rem; color: var(--forest); }
+  .cd-box span { font-family: var(--sans); font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+
+  /* ---------- Secciones de evento ---------- */
+  .section { position: relative; z-index: 1; padding: 20px 20px 56px; }
+  .section-title {
+    text-align: center;
+    font-size: clamp(1.7rem, 5vw, 2.2rem);
+    color: var(--forest-deep);
+    margin-bottom: 6px;
+  }
+  .section-title-wrap { text-align: center; margin-bottom: 26px; }
+
+  .event-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 620px) {
+    .event-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .event-card { text-align: center; }
+  .event-card .leaf-icon { width: 30px; height: 30px; color: var(--gold); margin-bottom: 10px; }
+  .event-card h3 { font-size: 1.4rem; color: var(--forest); margin-bottom: 4px; }
+  .event-card .event-time { font-family: var(--sans); font-size: 0.88rem; color: var(--moss); margin-bottom: 12px; }
+  .event-card p { margin: 0 0 4px; color: var(--ink); }
+  .event-card a.maps-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--forest);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .dress-code { text-align: center; max-width: 480px; margin: 0 auto; }
+  .dress-code h3 { color: var(--forest); font-size: 1.3rem; margin-bottom: 8px; }
+
+  /* ---------- RSVP ---------- */
+  #confirmar .card { max-width: 560px; margin: 0 auto; }
+  .rsvp-intro { text-align: center; color: var(--ink); margin-bottom: 4px; }
+  .rsvp-deadline { text-align: center; font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
+
+  .identify-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .identify-row input { flex: 1; min-width: 180px; }
+
+  .confirming-for {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .confirming-for strong { color: var(--forest); font-family: var(--serif); font-size: 1.05rem; }
+
+  .person-row {
+    border: 1px solid var(--sage-light);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    margin-bottom: 16px;
+    background: var(--cream);
+  }
+  .person-row-top { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+  .person-row-top .field { flex: 1; }
+  .remove-person-btn {
+    background: none;
+    border: none;
+    color: var(--error);
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 12px 4px;
+    white-space: nowrap;
+  }
+  .field-block { margin-bottom: 14px; }
+  .field-block:last-child { margin-bottom: 0; }
+  .diet-other-input { margin-top: 8px; }
+
+  #add-person-btn { width: 100%; margin-bottom: 22px; }
+
+  #rsvp-status { text-align: center; margin-top: 14px; }
+  .edit-hint {
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+  #copy-link-btn { display: block; margin: 10px auto 0; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px 20px 60px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+  footer .signature { font-family: var(--script); font-size: 1.8rem; color: var(--forest); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
+
+<div id="setup-warning">
+  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y pegá la URL de tu Web App de Google Apps Script.
+</div>
+
+<nav class="site-nav">
+  <a href="#inicio" id="nav-home"></a>
+  <a href="#ceremonia" id="nav-ceremony"></a>
+  <a href="#recepcion" id="nav-reception"></a>
+  <a href="#confirmar" id="nav-rsvp"></a>
+</nav>
+
+<header class="hero" id="inicio">
+  <svg class="hero-ornament" viewBox="0 0 300 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 30 C 60 5, 110 5, 150 30 C 190 55, 240 55, 290 30" stroke="currentColor" stroke-width="1.4"/>
+    <g stroke="currentColor" stroke-width="1.2" fill="currentColor">
+      <path d="M50 20 C 44 12, 34 12, 30 20 C 34 28, 44 28, 50 20 Z" fill-opacity="0.18"/>
+      <path d="M150 8 C 144 0, 134 0, 130 8 C 134 16, 144 16, 150 8 Z" fill-opacity="0.18"/>
+      <path d="M250 20 C 244 12, 234 12, 230 20 C 234 28, 244 28, 250 20 Z" fill-opacity="0.18"/>
+    </g>
+  </svg>
+  <p class="kicker" id="txt-kicker"></p>
+  <h1 class="couple-names"><span id="txt-partner1"></span><span class="amp">&amp;</span><span id="txt-partner2"></span></h1>
+  <p class="hero-date" id="txt-date-display"></p>
+  <p class="hero-welcome" id="txt-welcome"></p>
+
+  <p class="countdown-label" id="txt-countdown-label"></p>
+  <div class="countdown" id="countdown">
+    <div class="cd-box"><strong id="cd-days">00</strong><span id="cd-days-label"></span></div>
+    <div class="cd-box"><strong id="cd-hours">00</strong><span id="cd-hours-label"></span></div>
+    <div class="cd-box"><strong id="cd-minutes">00</strong><span id="cd-minutes-label"></span></div>
+    <div class="cd-box"><strong id="cd-seconds">00</strong><span id="cd-seconds-label"></span></div>
+  </div>
+
+  <a href="#confirmar" class="btn btn-primary" id="txt-cta"></a>
+</header>
+
+<section class="section reveal" id="ceremonia">
+  <div class="section-title-wrap">
+    <h2 class="section-title" id="txt-section-ceremony"></h2>
+    <div class="divider"><svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg></div>
+  </div>
+  <div class="event-grid">
+    <div class="card event-card">
+      <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>
+      <h3 id="cer-title"></h3>
+      <p class="event-time" id="cer-time"></p>
+      <p id="cer-place"></p>
+      <p id="cer-address"></p>
+      <a class="maps-link" id="cer-maps" href="#" target="_blank" rel="noopener">Ver en el mapa →</a>
+    </div>
+    <div class="card event-card">
+      <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>
+      <h3 id="rec-title"></h3>
+      <p class="event-time" id="rec-time"></p>
+      <p id="rec-place"></p>
+      <p id="rec-address"></p>
+      <a class="maps-link" id="rec-maps" href="#" target="_blank" rel="noopener">Ver en el mapa →</a>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal dress-code" id="recepcion">
+  <h3 id="dress-title"></h3>
+  <p id="dress-text"></p>
+</section>
+
+<section class="section reveal" id="confirmar">
+  <div class="section-title-wrap">
+    <h2 class="section-title" id="txt-rsvp-title"></h2>
+    <div class="divider"><svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg></div>
+  </div>
+
+  <div class="card">
+    <p class="rsvp-intro" id="txt-rsvp-intro"></p>
+    <p class="rsvp-deadline" id="txt-rsvp-deadline"></p>
+
+    <!-- Paso 1: identificación -->
+    <div id="identify-step">
+      <label for="identify-input" id="lbl-identify-title"></label>
+      <p class="status-msg muted" id="txt-identify-text" style="margin-top:-2px;margin-bottom:12px;"></p>
+      <div class="identify-row">
+        <input type="text" id="identify-input" maxlength="150">
+        <button type="button" class="btn btn-primary" id="identify-continue-btn"></button>
+      </div>
+    </div>
+
+    <!-- Cargando -->
+    <div id="rsvp-loading" class="status-msg muted" hidden></div>
+
+    <!-- Paso 2: formulario RSVP -->
+    <form id="rsvp-form" hidden>
+      <div class="confirming-for">
+        <span><span id="txt-confirming-for"></span> <strong id="confirming-label"></strong></span>
+        <button type="button" class="btn-text" id="change-identity-btn"></button>
+      </div>
+
+      <div id="people-list"></div>
+      <button type="button" class="btn btn-outline" id="add-person-btn"></button>
+
+      <div class="field-block">
+        <label for="comments" id="lbl-comments"></label>
+        <textarea id="comments" maxlength="2000"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%;justify-content:center;"></button>
+      <div id="rsvp-status" class="status-msg"></div>
+      <p class="edit-hint" id="txt-edit-hint"></p>
+      <button type="button" class="btn-text" id="copy-link-btn"></button>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p id="txt-footer-thanks"></p>
+  <p class="signature" id="txt-footer-signature"></p>
+</footer>
+
+<script src="config.js"></script>
+<script src="content.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const C = CONTENT;
+  const $ = (id) => document.getElementById(id);
+
+  const DIET_KEYS = ['vegan', 'vegetarian', 'celiac', 'lactose', 'other'];
+
+  // ---------------------------------------------------------
+  // Texto: aplica todo el contenido de content.js al DOM
+  // ---------------------------------------------------------
+  function applyContent() {
+    document.title = C.siteTitle;
+
+    $('nav-home').textContent = C.nav.home;
+    $('nav-ceremony').textContent = C.nav.ceremony;
+    $('nav-reception').textContent = C.nav.reception;
+    $('nav-rsvp').textContent = C.nav.rsvp;
+
+    $('txt-kicker').textContent = C.hero.kicker;
+    $('txt-partner1').textContent = C.couple.partner1;
+    $('txt-partner2').textContent = C.couple.partner2;
+    $('txt-date-display').textContent = C.hero.dateDisplay;
+    $('txt-welcome').textContent = C.hero.welcome;
+    $('txt-cta').textContent = C.hero.ctaButton;
+
+    $('txt-countdown-label').textContent = C.countdown.label;
+    $('cd-days-label').textContent = C.countdown.days;
+    $('cd-hours-label').textContent = C.countdown.hours;
+    $('cd-minutes-label').textContent = C.countdown.minutes;
+    $('cd-seconds-label').textContent = C.countdown.seconds;
+
+    $('txt-section-ceremony').textContent = C.nav.ceremony + ' & ' + C.nav.reception;
+
+    $('cer-title').textContent = C.ceremony.title;
+    $('cer-time').textContent = C.ceremony.time;
+    $('cer-place').textContent = C.ceremony.place;
+    $('cer-address').textContent = C.ceremony.address;
+    $('cer-maps').href = C.ceremony.mapsUrl;
+
+    $('rec-title').textContent = C.reception.title;
+    $('rec-time').textContent = C.reception.time;
+    $('rec-place').textContent = C.reception.place;
+    $('rec-address').textContent = C.reception.address;
+    $('rec-maps').href = C.reception.mapsUrl;
+
+    $('dress-title').textContent = C.dressCode.title;
+    $('dress-text').textContent = C.dressCode.text;
+
+    $('txt-rsvp-title').textContent = C.rsvp.title;
+    $('txt-rsvp-intro').textContent = C.rsvp.intro;
+    $('txt-rsvp-deadline').textContent = C.rsvp.deadlineText;
+
+    $('lbl-identify-title').textContent = C.identify.title;
+    $('txt-identify-text').textContent = C.identify.text;
+    $('identify-input').placeholder = C.identify.placeholder;
+    $('identify-continue-btn').textContent = C.identify.continue;
+
+    $('rsvp-loading').textContent = C.rsvp.loading;
+
+    $('txt-confirming-for').textContent = C.rsvp.confirmingFor;
+    $('change-identity-btn').textContent = C.rsvp.changeIdentity;
+    $('add-person-btn').textContent = C.rsvp.addPerson;
+    $('lbl-comments').textContent = C.rsvp.commentsLabel;
+    $('comments').placeholder = C.rsvp.commentsPlaceholder;
+    $('submit-btn').textContent = C.rsvp.submit;
+    $('txt-edit-hint').textContent = C.rsvp.editHint;
+    $('copy-link-btn').textContent = C.rsvp.copyLink;
+
+    $('txt-footer-thanks').textContent = C.footer.thanks;
+    $('txt-footer-signature').textContent = C.footer.signature;
+  }
+
+  // ---------------------------------------------------------
+  // Hojas flotantes decorativas
+  // ---------------------------------------------------------
+  function spawnLeaves() {
+    const host = $('leaves-bg');
+    const total = 9;
+    for (let i = 0; i < total; i++) {
+      const size = 14 + (i % 4) * 6;
+      const left = (i * 97) % 100;
+      const duration = 14 + (i % 5) * 4;
+      const delay = -(i * 3.4);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'currentColor');
+      svg.classList.add('leaf-float');
+      svg.style.left = left + '%';
+      svg.style.width = size + 'px';
+      svg.style.height = size + 'px';
+      svg.style.animationDuration = duration + 's';
+      svg.style.animationDelay = delay + 's';
+      svg.innerHTML = '<path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/>';
+      host.appendChild(svg);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // Cuenta regresiva
+  // ---------------------------------------------------------
+  function startCountdown() {
+    const target = new Date(C.eventDateISO).getTime();
+    function tick() {
+      const diff = target - Date.now();
+      if (isNaN(target)) return;
+      if (diff <= 0) {
+        $('countdown').innerHTML = '<p style="font-family:var(--sans);color:var(--forest);">' + C.countdown.todayMessage + '</p>';
+        clearInterval(timer);
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      $('cd-days').textContent = String(d).padStart(2, '0');
+      $('cd-hours').textContent = String(h).padStart(2, '0');
+      $('cd-minutes').textContent = String(m).padStart(2, '0');
+      $('cd-seconds').textContent = String(s).padStart(2, '0');
+    }
+    tick();
+    const timer = setInterval(tick, 1000);
+  }
+
+  // ---------------------------------------------------------
+  // Revelado al hacer scroll
+  // ---------------------------------------------------------
+  function startRevealObserver() {
+    const items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach((el) => el.classList.add('in-view'));
+      return;
+    }
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    items.forEach((el) => obs.observe(el));
+  }
+
+  // ---------------------------------------------------------
+  // Utilidades
+  // ---------------------------------------------------------
+  function slugify(str) {
+    // Strip combining diacritical marks (U+0300–U+036F) after NFD
+    // normalization, e.g. "Pérez" -> "pe" + combining-acute -> "perez".
+    var diacriticStart = String.fromCharCode(0x0300);
+    var diacriticEnd = String.fromCharCode(0x036f);
+    var diacritics = new RegExp('[' + diacriticStart + '-' + diacriticEnd + ']', 'g');
+    return String(str || '')
+      .normalize('NFD').replace(diacritics, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 120);
+  }
+
+  function isConfigured() {
+    return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+  }
+
+  // ---------------------------------------------------------
+  // Filas de personas (formulario RSVP)
+  // ---------------------------------------------------------
+  let personCounter = 0;
+
+  function buildDietChips(rowId, selected, otherValue) {
+    const wrap = document.createElement('div');
+    wrap.className = 'chip-group';
+    DIET_KEYS.forEach((key) => {
+      const label = document.createElement('label');
+      label.className = 'chip' + (selected.indexOf(key) !== -1 ? ' checked' : '');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = key;
+      cb.checked = selected.indexOf(key) !== -1;
+      cb.dataset.role = 'diet';
+      cb.addEventListener('change', () => {
+        label.classList.toggle('checked', cb.checked);
+        updateOtherVisibility(rowId);
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(C.rsvp.dietOptions[key]));
+      wrap.appendChild(label);
+    });
+    return wrap;
+  }
+
+  function updateOtherVisibility(rowId) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    const otherChecked = row.querySelector('input[data-role="diet"][value="other"]').checked;
+    row.querySelector('.diet-other-input').hidden = !otherChecked;
+  }
+
+  function createPersonRow(data) {
+    data = data || {};
+    personCounter += 1;
+    const rowId = 'person-' + personCounter;
+
+    const row = document.createElement('div');
+    row.className = 'person-row';
+    row.id = rowId;
+
+    // Nombre + botón quitar
+    const top = document.createElement('div');
+    top.className = 'person-row-top';
+
+    const field = document.createElement('div');
+    field.className = 'field';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.maxLength = 120;
+    nameInput.placeholder = C.rsvp.namePlaceholder;
+    nameInput.dataset.role = 'name';
+    nameInput.value = data.name || '';
+    field.appendChild(nameInput);
+    top.appendChild(field);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-person-btn';
+    removeBtn.textContent = '✕ ' + C.rsvp.removePerson;
+    removeBtn.addEventListener('click', () => {
+      if (document.querySelectorAll('.person-row').length <= 1) return;
+      row.remove();
+    });
+    top.appendChild(removeBtn);
+    row.appendChild(top);
+
+    // Asistencia
+    const attBlock = document.createElement('div');
+    attBlock.className = 'field-block';
+    const attLabel = document.createElement('label');
+    attLabel.textContent = C.rsvp.attendingLabel;
+    attBlock.appendChild(attLabel);
+
+    const pillGroup = document.createElement('div');
+    pillGroup.className = 'pill-group';
+    pillGroup.dataset.role = 'attending';
+
+    const yesBtn = document.createElement('button');
+    yesBtn.type = 'button';
+    yesBtn.className = 'pill' + (data.attending === true ? ' selected' : '');
+    yesBtn.textContent = C.rsvp.yes;
+    yesBtn.dataset.value = 'yes';
+
+    const noBtn = document.createElement('button');
+    noBtn.type = 'button';
+    noBtn.className = 'pill no' + (data.attending === false ? ' selected' : '');
+    noBtn.textContent = C.rsvp.no;
+    noBtn.dataset.value = 'no';
+
+    function selectAttendance(value) {
+      yesBtn.classList.toggle('selected', value === 'yes');
+      noBtn.classList.toggle('selected', value === 'no');
+      pillGroup.dataset.value = value;
+      dietSection.hidden = value !== 'yes';
+    }
+    yesBtn.addEventListener('click', () => selectAttendance('yes'));
+    noBtn.addEventListener('click', () => selectAttendance('no'));
+
+    pillGroup.appendChild(yesBtn);
+    pillGroup.appendChild(noBtn);
+    attBlock.appendChild(pillGroup);
+    row.appendChild(attBlock);
+
+    // Restricciones alimentarias (solo si asiste)
+    const dietSection = document.createElement('div');
+    dietSection.className = 'field-block';
+    dietSection.hidden = data.attending !== true;
+    const dietLabel = document.createElement('label');
+    dietLabel.textContent = C.rsvp.dietLabel;
+    dietSection.appendChild(dietLabel);
+    dietSection.appendChild(buildDietChips(rowId, data.diet || [], data.dietOther || ''));
+
+    const otherInput = document.createElement('input');
+    otherInput.type = 'text';
+    otherInput.className = 'diet-other-input';
+    otherInput.maxLength = 300;
+    otherInput.placeholder = C.rsvp.dietOtherPlaceholder;
+    otherInput.dataset.role = 'dietOther';
+    otherInput.value = data.dietOther || '';
+    otherInput.hidden = (data.diet || []).indexOf('other') === -1;
+    dietSection.appendChild(otherInput);
+
+    row.appendChild(dietSection);
+
+    if (data.attending === true) {
+      // set pill state now that dietSection exists
+      selectAttendance('yes');
+    } else if (data.attending === false) {
+      selectAttendance('no');
+    }
+
+    return row;
+  }
+
+  function addPersonRow(data) {
+    $('people-list').appendChild(createPersonRow(data));
+  }
+
+  function collectPeople() {
+    const rows = document.querySelectorAll('.person-row');
+    const people = [];
+    let missingName = false;
+    let missingAttendance = false;
+
+    rows.forEach((row) => {
+      const name = row.querySelector('[data-role="name"]').value.trim();
+      const pillGroup = row.querySelector('[data-role="attending"]');
+      const attValue = pillGroup.dataset.value;
+      if (!name) { missingName = true; return; }
+      if (!attValue) { missingAttendance = true; return; }
+
+      const diet = [];
+      row.querySelectorAll('input[data-role="diet"]:checked').forEach((cb) => diet.push(cb.value));
+      const dietOther = row.querySelector('[data-role="dietOther"]').value.trim();
+
+      people.push({
+        name: name,
+        attending: attValue === 'yes',
+        diet: diet,
+        dietOther: diet.indexOf('other') !== -1 ? dietOther : ''
+      });
+    });
+
+    return { people, missingName, missingAttendance };
+  }
+
+  // ---------------------------------------------------------
+  // Backend
+  // ---------------------------------------------------------
+  async function fetchGuest(guestId) {
+    const url = APPS_SCRIPT_URL + '?action=get&guest=' + encodeURIComponent(guestId);
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function saveGuest(payload) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  // ---------------------------------------------------------
+  // Flujo de identificación + RSVP
+  // ---------------------------------------------------------
+  let currentGuestId = null;
+  let currentLabel = null;
+
+  function setUrlGuest(guestId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('g', guestId);
+    window.history.replaceState(null, '', url.toString());
+  }
+
+  function showIdentifyStep() {
+    $('identify-step').hidden = false;
+    $('rsvp-form').hidden = true;
+    $('rsvp-loading').hidden = true;
+  }
+
+  async function loadGuest(guestId, label) {
+    currentGuestId = guestId;
+    currentLabel = label || guestId;
+    localStorage.setItem('weddingGuestId', guestId);
+    localStorage.setItem('weddingGuestLabel', currentLabel);
+    setUrlGuest(guestId);
+
+    $('identify-step').hidden = true;
+    $('rsvp-form').hidden = true;
+    $('rsvp-loading').hidden = false;
+
+    $('people-list').innerHTML = '';
+    personCounter = 0;
+
+    let result;
+    try {
+      result = await fetchGuest(guestId);
+    } catch (err) {
+      $('rsvp-loading').textContent = C.rsvp.errorMessage;
+      return;
+    }
+
+    $('confirming-label').textContent = currentLabel;
+
+    if (result.ok && result.exists && result.data) {
+      currentLabel = result.data.label || currentLabel;
+      $('confirming-label').textContent = currentLabel;
+      result.data.people.forEach((p) => addPersonRow(p));
+      $('comments').value = result.data.comments || '';
+      $('submit-btn').textContent = C.rsvp.update;
+    } else {
+      addPersonRow({});
+      $('submit-btn').textContent = C.rsvp.submit;
+    }
+
+    $('rsvp-loading').hidden = true;
+    $('rsvp-form').hidden = false;
+  }
+
+  function resetIdentity() {
+    localStorage.removeItem('weddingGuestId');
+    localStorage.removeItem('weddingGuestLabel');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('g');
+    window.history.replaceState(null, '', url.toString());
+    currentGuestId = null;
+    $('identify-input').value = '';
+    showIdentifyStep();
+  }
+
+  function initRsvpFlow() {
+    if (!isConfigured()) {
+      $('setup-warning').style.display = 'block';
+      $('rsvp-loading').hidden = true;
+      $('identify-step').hidden = true;
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const urlGuest = params.get('g');
+    const storedGuest = localStorage.getItem('weddingGuestId');
+    const storedLabel = localStorage.getItem('weddingGuestLabel');
+
+    if (urlGuest) {
+      loadGuest(slugify(urlGuest), storedGuest === slugify(urlGuest) ? storedLabel : urlGuest);
+    } else if (storedGuest) {
+      loadGuest(storedGuest, storedLabel);
+    } else {
+      showIdentifyStep();
+    }
+
+    $('identify-continue-btn').addEventListener('click', () => {
+      const raw = $('identify-input').value.trim();
+      if (!raw) return;
+      const guestId = slugify(raw);
+      if (!guestId) return;
+      loadGuest(guestId, raw);
+    });
+    $('identify-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); $('identify-continue-btn').click(); }
+    });
+
+    $('change-identity-btn').addEventListener('click', resetIdentity);
+
+    $('add-person-btn').addEventListener('click', () => addPersonRow({}));
+
+    $('copy-link-btn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showStatus($('rsvp-status'), C.rsvp.copiedMessage, 'ok');
+      } catch (e) {
+        // Clipboard API not available; silently ignore.
+      }
+    });
+
+    $('rsvp-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { people, missingName, missingAttendance } = collectPeople();
+
+      if (people.length === 0 || missingName) {
+        showStatus($('rsvp-status'), C.rsvp.requireName, 'error');
+        return;
+      }
+      if (missingAttendance) {
+        showStatus($('rsvp-status'), C.rsvp.requireAttendance, 'error');
+        return;
+      }
+
+      const submitBtn = $('submit-btn');
+      submitBtn.disabled = true;
+      showStatus($('rsvp-status'), C.rsvp.saving, 'muted');
+
+      try {
+        const result = await saveGuest({
+          guest: currentGuestId,
+          label: currentLabel,
+          people: people,
+          comments: $('comments').value.trim()
+        });
+        if (!result.ok) throw new Error(result.error || 'error');
+        showStatus($('rsvp-status'), C.rsvp.savedMessage, 'ok');
+        submitBtn.textContent = C.rsvp.update;
+      } catch (err) {
+        showStatus($('rsvp-status'), C.rsvp.errorMessage, 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function showStatus(el, text, kind) {
+    el.textContent = text;
+    el.className = 'status-msg' + (kind ? ' ' + kind : '');
+  }
+
+  // ---------------------------------------------------------
+  // Arranque
+  // ---------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', () => {
+    applyContent();
+    spawnLeaves();
+    startCountdown();
+    startRevealObserver();
+    initRsvpFlow();
+  });
+})();
+</script>
+</body>
+</html>

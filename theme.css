@@ -1,0 +1,237 @@
+/* ============================================================
+   TEMA COMPARTIDO — paleta verde / naturaleza
+   Usado por index.html y confirmados.html
+   ============================================================ */
+
+:root {
+  --forest: #22402a;
+  --forest-deep: #17301f;
+  --moss: #4f7a52;
+  --sage: #8faa87;
+  --sage-light: #d9e4d1;
+  --cream: #f8f5ec;
+  --cream-deep: #f0ead9;
+  --gold: #b99a53;
+  --ink: #263021;
+  --muted: #6d7663;
+  --white: #ffffff;
+  --error: #a8453d;
+  --ok: #3f7a4e;
+  --shadow: 0 12px 32px rgba(23, 48, 31, 0.10);
+  --shadow-soft: 0 4px 14px rgba(23, 48, 31, 0.07);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --serif: 'Cormorant Garamond', Georgia, 'Iowan Old Style', serif;
+  --script: 'Alex Brush', 'Brush Script MT', cursive;
+  --sans: 'Jost', 'Segoe UI', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; }
+
+a { color: inherit; }
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 13px 28px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--forest);
+  color: var(--cream);
+  box-shadow: var(--shadow-soft);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--forest-deep);
+  box-shadow: var(--shadow);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--moss);
+  color: var(--forest);
+}
+.btn-outline:hover:not(:disabled) { background: var(--sage-light); }
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--moss);
+  padding: 6px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Tarjetas ---------- */
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--sage-light);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 28px 24px;
+}
+
+/* ---------- Formularios ---------- */
+
+label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input[type="text"], textarea, input[type="password"] {
+  width: 100%;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  padding: 12px 14px;
+  border: 1px solid var(--sage-light);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--ink);
+  resize: vertical;
+}
+input[type="text"]:focus, textarea:focus, input[type="password"]:focus {
+  outline: 2px solid var(--moss);
+  outline-offset: 1px;
+}
+textarea { min-height: 90px; }
+
+/* Grupo de botones tipo "pill" para elegir una opción (asiste sí/no) */
+.pill-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pill {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--sage-light);
+  background: var(--cream);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pill:hover { border-color: var(--moss); }
+.pill.selected {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--cream);
+}
+.pill.selected.no { background: var(--error); border-color: var(--error); }
+
+/* Checkboxes en formato "chip" */
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--sage-light);
+  background: var(--cream);
+  cursor: pointer;
+  user-select: none;
+}
+.chip input { accent-color: var(--forest); }
+.chip.checked { background: var(--sage-light); border-color: var(--moss); }
+
+/* ---------- Decoración vegetal ---------- */
+
+.leaf-icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 8px 0 28px;
+  color: var(--moss);
+}
+.divider::before, .divider::after {
+  content: '';
+  height: 1px;
+  width: 60px;
+  background: var(--sage-light);
+}
+
+.leaves-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.leaf-float {
+  position: absolute;
+  top: -60px;
+  color: var(--sage);
+  opacity: 0.35;
+  animation: leafFall linear infinite;
+}
+@keyframes leafFall {
+  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); }
+  50% { transform: translateY(50vh) translateX(24px) rotate(160deg); }
+  100% { transform: translateY(110vh) translateX(-16px) rotate(320deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .leaf-float { animation: none; display: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- Revelado al hacer scroll ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+
+/* ---------- Utilidades de estado ---------- */
+
+.status-msg { font-family: var(--sans); font-size: 0.88rem; min-height: 1.2em; }
+.status-msg.error { color: var(--error); }
+.status-msg.ok { color: var(--ok); }
+.status-msg.muted { color: var(--muted); }

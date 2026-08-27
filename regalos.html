@@ -11,18 +11,18 @@
 <style>
   body { position: relative; }
 
-  .back-link {
+  #setup-warning {
     position: relative;
-    z-index: 1;
-    display: block;
-    text-align: center;
-    padding: 16px 12px 0;
+    z-index: 2;
+    background: #fff3ea;
+    border-bottom: 1px solid var(--gold);
+    color: #6b4a2c;
+    padding: 12px 20px;
     font-family: var(--sans);
-    font-size: 0.82rem;
-    color: var(--moss);
-    text-decoration: none;
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
   }
-  .back-link:hover { text-decoration: underline; }
 
   header.hero {
     position: relative;
@@ -53,6 +53,22 @@
 
   .section { position: relative; z-index: 1; padding: 20px 20px 56px; }
 
+  /* ---------- Identidad de grupo ---------- */
+  .identify-card { max-width: 480px; margin: 24px auto 0; }
+  .identify-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .identify-row input { flex: 1; min-width: 180px; }
+  .identified-bar {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .identified-bar strong { color: var(--forest); font-family: var(--serif); font-size: 1.05rem; }
+
   .gift-grid {
     max-width: 900px;
     margin: 30px auto 0;
@@ -73,6 +89,16 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+  .gift-status {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    margin: 12px 0 0;
+  }
+  .gift-status.unclaimed { color: var(--muted); }
+  .gift-status.claimed { color: var(--error); }
+  .gift-status.mine { color: var(--ok); font-weight: 600; }
+  .gift-card .claim-btn { margin-top: 10px; width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; }
 
   .empty-note {
     max-width: 420px;
@@ -116,7 +142,18 @@
 
 <div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
 
-<a class="back-link" href="index.html" id="back-link"></a>
+<div id="setup-warning">
+  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y pegá la URL de tu Web App de Google Apps Script.
+</div>
+
+<nav class="site-nav">
+  <a href="index.html#inicio" id="nav-home"></a>
+  <a href="index.html#ceremonia" id="nav-ceremony"></a>
+  <a href="index.html#recepcion" id="nav-reception"></a>
+  <a href="confirmar.html" id="nav-rsvp"></a>
+  <a href="regalos.html" id="nav-wishlist" class="active"></a>
+  <a href="fotos.html" id="nav-photos"></a>
+</nav>
 
 <header class="hero">
   <p class="kicker" id="txt-kicker"></p>
@@ -125,6 +162,25 @@
 </header>
 
 <section class="section">
+
+  <div class="card identify-card" id="identify-card">
+    <div id="identify-step">
+      <label for="identify-input" id="lbl-identify-title"></label>
+      <p class="status-msg muted" id="txt-identify-text" style="margin-top:-2px;margin-bottom:12px;"></p>
+      <div class="identify-row">
+        <input type="text" id="identify-input" maxlength="150" list="guest-suggestions" autocomplete="off">
+        <datalist id="guest-suggestions"></datalist>
+        <button type="button" class="btn btn-primary" id="identify-continue-btn"></button>
+      </div>
+    </div>
+    <div class="identified-bar" id="identified-bar" hidden>
+      <span><span id="txt-reserving-as"></span> <strong id="identified-label"></strong></span>
+      <button type="button" class="btn-text" id="change-identity-btn"></button>
+    </div>
+  </div>
+
+  <p class="status-msg muted" id="claims-status" style="text-align:center;margin-top:16px;"></p>
+
   <div class="gift-grid" id="gift-grid"></div>
   <p class="empty-note" id="empty-note" hidden></p>
 
@@ -141,12 +197,20 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
+<script src="guests.js"></script>
 <script>
 (function () {
   'use strict';
 
   const C = CONTENT.wishlist;
+  const CC = C.claim;
   const $ = (id) => document.getElementById(id);
+
+  let currentGuestId = null;
+  let currentLabel = null;
+  let claims = {};
+  let claimsLoaded = false;
+  let busyItem = null; // item key currently being saved, to disable its button
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -154,30 +218,40 @@
     return div.innerHTML;
   }
 
-  function applyContent() {
+  function fillTemplate(str, label) {
+    return String(str || '').replace('{label}', label);
+  }
+
+  function isConfigured() {
+    return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+  }
+
+  function itemKey(item) {
+    return item.key || slugifyGuestLabel(item.name);
+  }
+
+  // ---------------------------------------------------------
+  // Texto estático + hojas decorativas
+  // ---------------------------------------------------------
+  function applyStaticContent() {
     document.title = C.title + ' — ' + CONTENT.siteTitle;
-    $('back-link').textContent = CONTENT.common.backToInvite;
+    $('nav-home').textContent = CONTENT.nav.home;
+    $('nav-ceremony').textContent = CONTENT.nav.ceremony;
+    $('nav-reception').textContent = CONTENT.nav.reception;
+    $('nav-rsvp').textContent = CONTENT.nav.rsvp;
+    $('nav-wishlist').textContent = CONTENT.nav.wishlist;
+    $('nav-photos').textContent = CONTENT.nav.photos;
     $('txt-kicker').textContent = C.kicker;
     $('txt-title').textContent = C.title;
     $('txt-intro').textContent = C.intro;
     $('txt-footer-signature').textContent = CONTENT.footer.signature;
 
-    const items = C.items || [];
-    if (items.length === 0) {
-      $('empty-note').hidden = false;
-      $('empty-note').textContent = C.emptyNote;
-    } else {
-      $('gift-grid').innerHTML = items.map((item) => {
-        const link = item.link
-          ? '<a class="gift-link" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">' + escapeHtml(C.linkText) + '</a>'
-          : '';
-        const note = item.note ? '<p>' + escapeHtml(item.note) + '</p>' : '';
-        return '<div class="card gift-card">' +
-          '<svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>' +
-          '<h3>' + escapeHtml(item.name) + '</h3>' + note + link +
-          '</div>';
-      }).join('');
-    }
+    $('lbl-identify-title').textContent = CC.identifyTitle;
+    $('txt-identify-text').textContent = CC.identifyText;
+    $('identify-input').placeholder = CC.placeholder;
+    $('identify-continue-btn').textContent = CC.continue;
+    $('txt-reserving-as').textContent = CC.reservingAs;
+    $('change-identity-btn').textContent = CC.changeIdentity;
 
     if (C.cashText || C.cashAlias) {
       $('cash-card').hidden = false;
@@ -188,6 +262,17 @@
         $('cash-alias').textContent = C.cashAlias;
       }
     }
+  }
+
+  function populateGuestSuggestions() {
+    const dl = $('guest-suggestions');
+    if (!dl || typeof GUEST_LIST === 'undefined') return;
+    dl.innerHTML = '';
+    GUEST_LIST.forEach((g) => {
+      const opt = document.createElement('option');
+      opt.value = g.label;
+      dl.appendChild(opt);
+    });
   }
 
   function spawnLeaves() {
@@ -212,9 +297,219 @@
     }
   }
 
+  // ---------------------------------------------------------
+  // Identidad (compartida con la confirmación de asistencia:
+  // mismas claves de localStorage que index.html).
+  // ---------------------------------------------------------
+  function showIdentified() {
+    $('identify-step').hidden = true;
+    $('identified-bar').hidden = false;
+    $('identified-label').textContent = currentLabel;
+  }
+
+  function showIdentifyStep() {
+    $('identify-step').hidden = false;
+    $('identified-bar').hidden = true;
+  }
+
+  function setIdentity(guestId, label) {
+    currentGuestId = guestId;
+    currentLabel = label || guestId;
+    localStorage.setItem('weddingGuestId', guestId);
+    localStorage.setItem('weddingGuestLabel', currentLabel);
+    showIdentified();
+  }
+
+  function clearIdentity() {
+    localStorage.removeItem('weddingGuestId');
+    localStorage.removeItem('weddingGuestLabel');
+    currentGuestId = null;
+    currentLabel = null;
+    $('identify-input').value = '';
+    showIdentifyStep();
+    renderItems();
+  }
+
+  function initIdentity() {
+    const storedId = localStorage.getItem('weddingGuestId');
+    const storedLabel = localStorage.getItem('weddingGuestLabel');
+    if (storedId) {
+      currentGuestId = storedId;
+      currentLabel = storedLabel || storedId;
+      showIdentified();
+    } else {
+      showIdentifyStep();
+    }
+
+    $('identify-continue-btn').addEventListener('click', () => {
+      const raw = $('identify-input').value.trim();
+      if (!raw) return;
+      const guestId = slugifyGuestLabel(raw);
+      if (!guestId) return;
+      const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
+      setIdentity(guestId, preset ? preset.label : raw);
+      renderItems();
+    });
+    $('identify-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); $('identify-continue-btn').click(); }
+    });
+    $('change-identity-btn').addEventListener('click', clearIdentity);
+  }
+
+  // ---------------------------------------------------------
+  // Backend
+  // ---------------------------------------------------------
+  async function fetchClaims() {
+    const url = APPS_SCRIPT_URL + '?action=claims';
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function postClaimAction(payload) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  async function loadClaims() {
+    if (!isConfigured()) return;
+    $('claims-status').textContent = CC.loading;
+    try {
+      const result = await fetchClaims();
+      claims = (result.ok && result.claims) ? result.claims : {};
+    } catch (err) {
+      claims = {};
+    }
+    claimsLoaded = true;
+    $('claims-status').textContent = '';
+    renderItems();
+  }
+
+  async function handleClaimClick(action, key) {
+    if (!currentGuestId || busyItem) return;
+    busyItem = key;
+    renderItems();
+    try {
+      const result = await postClaimAction({
+        action: action,
+        guest: currentGuestId,
+        label: currentLabel,
+        item: key
+      });
+      if (result.ok) {
+        claims = result.claims || claims;
+      } else {
+        $('claims-status').textContent = CC.error;
+      }
+    } catch (err) {
+      $('claims-status').textContent = CC.error;
+    }
+    busyItem = null;
+    renderItems();
+  }
+
+  // ---------------------------------------------------------
+  // Tarjetas de regalos
+  // ---------------------------------------------------------
+  function statusFor(key) {
+    const list = Array.isArray(claims[key]) ? claims[key] : [];
+    const mine = !!currentGuestId && list.some((c) => c.guest === currentGuestId);
+    const others = list.filter((c) => !currentGuestId || c.guest !== currentGuestId);
+    return { list, mine, others };
+  }
+
+  function cardHtml(item) {
+    const key = itemKey(item);
+    const link = item.link
+      ? '<a class="gift-link" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">' + escapeHtml(C.linkText) + '</a>'
+      : '';
+    const note = item.note ? '<p>' + escapeHtml(item.note) + '</p>' : '';
+
+    let statusText = '';
+    let statusClass = 'unclaimed';
+    let actionHtml = '';
+
+    if (!isConfigured()) {
+      statusText = '';
+    } else if (!claimsLoaded) {
+      statusText = CC.loading;
+    } else {
+      const { list, mine, others } = statusFor(key);
+      const saving = busyItem === key;
+
+      if (mine) {
+        statusText = CC.claimedByYou;
+        statusClass = 'mine';
+        actionHtml = '<button type="button" class="btn btn-outline claim-btn" data-action="unclaim" data-item="' +
+          escapeHtml(key) + '"' + (saving ? ' disabled' : '') + '>' +
+          escapeHtml(saving ? CC.saving : CC.unclaimButton) + '</button>';
+      } else if (others.length > 0) {
+        statusClass = 'claimed';
+        if (C.showClaimerName) {
+          statusText = others.length > 1
+            ? fillTemplate(CC.claimedByOtherAndMore, others[0].label)
+            : fillTemplate(CC.claimedByOther, others[0].label);
+        } else {
+          statusText = CC.claimedGeneric;
+        }
+      } else if (list.length === 0) {
+        statusClass = 'unclaimed';
+        statusText = CC.unclaimed;
+        if (currentGuestId) {
+          actionHtml = '<button type="button" class="btn btn-primary claim-btn" data-action="claim" data-item="' +
+            escapeHtml(key) + '"' + (saving ? ' disabled' : '') + '>' +
+            escapeHtml(saving ? CC.saving : CC.claimButton) + '</button>';
+        }
+      }
+    }
+
+    const statusHtml = statusText ? '<p class="gift-status ' + statusClass + '">' + escapeHtml(statusText) + '</p>' : '';
+
+    return '<div class="card gift-card">' +
+      '<svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>' +
+      '<h3>' + escapeHtml(item.name) + '</h3>' + note + link + statusHtml + actionHtml +
+      '</div>';
+  }
+
+  function renderItems() {
+    const items = C.items || [];
+    if (items.length === 0) {
+      $('empty-note').hidden = false;
+      $('empty-note').textContent = C.emptyNote;
+      $('gift-grid').innerHTML = '';
+      return;
+    }
+    $('empty-note').hidden = true;
+    $('gift-grid').innerHTML = items.map(cardHtml).join('');
+  }
+
+  function initGridClicks() {
+    $('gift-grid').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      handleClaimClick(btn.dataset.action, btn.dataset.item);
+    });
+  }
+
+  // ---------------------------------------------------------
+  // Arranque
+  // ---------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
-    applyContent();
+    applyStaticContent();
+    populateGuestSuggestions();
     spawnLeaves();
+
+    if (!isConfigured()) {
+      $('setup-warning').style.display = 'block';
+    }
+
+    initIdentity();
+    initGridClicks();
+    renderItems();
+    loadClaims();
   });
 })();
 </script>

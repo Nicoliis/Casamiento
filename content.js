@@ -73,6 +73,7 @@ const CONTENT = {
   },
 
   rsvp: {
+    kicker: 'CONFIRMÁ TU LUGAR',
     title: 'Confirmá tu asistencia',
     intro: 'Contanos quiénes vendrán y si tienen alguna necesidad especial en la comida.',
     deadlineText: 'Por favor confirmá antes del 1 de octubre de 2026.',
@@ -115,22 +116,52 @@ const CONTENT = {
 
   // ------------------------------------------------------------
   // Página de regalos (regalos.html). Para agregar o quitar una
-  // idea de regalo, sumá o borrá un objeto de "items". Cada uno
-  // puede tener "link" vacío si no hay un lugar puntual para verlo.
+  // idea de regalo, sumá o borrá un objeto de "items".
+  //   key  -> identificador estable del regalo (sin espacios ni
+  //           tildes). Es lo que guarda quién lo reservó, así que
+  //           una vez que un item tiene reservas NO le cambies el
+  //           key (podés cambiar el "name" y el resto libremente).
+  //   link -> opcional, a una tienda online. Se puede dejar vacío.
+  // Cada invitado se identifica (igual que en la confirmación) y
+  // puede "reservar" un regalo para que los demás vean que ya está
+  // cubierto — y deshacer la reserva si se arrepiente.
   // ------------------------------------------------------------
   wishlist: {
     title: 'Lista de regalos',
     kicker: 'CON CARIÑO',
-    intro: 'Lo más importante para nosotros es compartir este día con vos. Si además querés hacernos un regalo, te dejamos algunas ideas.',
+    intro: 'Lo más importante para nosotros es compartir este día con vos. Si además querés hacernos un regalo, te dejamos algunas ideas — reservá la que quieras para que no se repita.',
     linkText: 'Ver →',
     items: [
-		{ name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' },
-		{ name: 'Vajilla', note: 'Set de platos color blanco o crudo', link: 'https://ejemplo.com' },
+      { key: 'sabanas', name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' },
+      { key: 'vajilla', name: 'Vajilla', note: 'Set de platos color blanco o crudo', link: 'https://ejemplo.com' },
     ],
     emptyNote: 'Todavía no cargamos ideas por acá — ¡pronto vamos a sumar algunas!',
     cashTitle: 'Un gesto en efectivo',
     cashText: '',
-    cashAlias: ''
+    cashAlias: '',
+
+    // Si es false, las tarjetas sólo dicen "reservado" sin decir por
+    // quién (igual sabés vos si fuiste vos el que reservó).
+    showClaimerName: true,
+
+    claim: {
+      identifyTitle: '¿Quién sos?',
+      identifyText: 'Ingresá tu nombre o el de tu familia para poder reservar regalos.',
+      placeholder: 'Ej: Familia Pérez',
+      continue: 'Continuar',
+      reservingAs: 'Reservando como:',
+      changeIdentity: '¿No sos vos? Cambiar',
+      loading: 'Cargando reservas…',
+      claimButton: 'Lo llevamos nosotros',
+      unclaimButton: 'Deshacer reserva',
+      claimedByYou: '¡Lo reservaste vos!',
+      claimedByOther: 'Reservado por {label}',
+      claimedByOtherAndMore: 'Reservado por {label} y otro grupo más',
+      claimedGeneric: 'Ya fue reservado',
+      unclaimed: 'Todavía nadie lo reservó',
+      saving: 'Guardando…',
+      error: 'Algo salió mal, probá de nuevo.'
+    }
   },
 
   // ------------------------------------------------------------
@@ -178,6 +209,13 @@ const CONTENT = {
     refresh: '↻ Actualizar',
     empty: 'Todavía no hay confirmaciones.',
     yes: 'Sí',
-    no: 'No'
+    no: 'No',
+
+    giftsTitle: 'Regalos reservados',
+    tableGift: 'Regalo',
+    giftsClaimedBy: 'Reservado por',
+    giftsUnclaimed: 'Sin reservar',
+    giftsConflict: '⚠ Reservado por más de un grupo — coordinalos vos',
+    giftsEmpty: 'Todavía no cargaste regalos en content.js.'
   }
 };

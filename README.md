@@ -10,36 +10,46 @@ invitados no necesitan iniciar sesión en Google.
 
 | Archivo | Qué es |
 |---|---|
-| `Code.gs` | Backend (Google Apps Script). Lee/escribe `rsvps.json` en tu carpeta de Drive. |
+| `Code.gs` | Backend (Google Apps Script). Lee/escribe `rsvps.json` y `regalos.json` en tu carpeta de Drive. |
 | `config.js` | Un solo lugar con la URL de tu Web App de Apps Script. |
 | `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, la lista de regalos, etc. Editá solo este archivo para cambiar palabras. |
 | `guests.js` | Lista opcional de familias/grupos invitados, para precargar nombres y ver quién no respondió. |
-| `theme.css` | Paleta de colores y estilos compartidos (verde/naturaleza). |
-| `index.html` | La invitación pública: portada, ceremonia/recepción, código de vestimenta y formulario de confirmación. |
+| `theme.css` | Paleta de colores y estilos compartidos (verde/naturaleza) — incluye el menú de navegación, compartido por todas las páginas. |
+| `index.html` | La invitación pública: portada, ceremonia/recepción y código de vestimenta. |
+| `confirmar.html` | Formulario de confirmación de asistencia (RSVP), en su propia página. |
 | `confirmados.html` | Panel privado (con contraseña) que agrega todas las confirmaciones recibidas, más los grupos que todavía no respondieron. |
-| `regalos.html` | Lista de regalos / ideas para el casamiento. |
+| `regalos.html` | Lista de regalos / ideas para el casamiento, con reserva por grupo. |
 | `fotos.html` | Página con el código QR para subir fotos durante la fiesta. |
+
+Todas las páginas públicas (`index.html`, `confirmar.html`, `regalos.html`,
+`fotos.html`) comparten el mismo menú de navegación arriba de todo — se
+adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
 
 ## Cómo funciona el link de cada invitado
 
-- La invitación no tiene una lista de invitados precargada: cada persona/
-  familia escribe su nombre la primera vez que entra (paso "¿Quién sos?").
+- La confirmación de asistencia vive en `confirmar.html` (antes era una
+  sección dentro de `index.html`). No tiene una lista de invitados
+  precargada: cada persona/familia escribe su nombre la primera vez que
+  entra (paso "¿Quién sos?").
 - Ese nombre se convierte en un identificador (`slug`) y queda en la URL
   como `?g=familia-perez`. Volver a abrir ese mismo link — o el mismo
   navegador, gracias a `localStorage` — carga y permite **editar** esa misma
   respuesta en vez de crear una nueva.
 - Si vos preferís armar los links a mano y mandarlos por WhatsApp con el
-  nombre ya puesto (por ejemplo `index.html?g=familia-perez`), funciona
+  nombre ya puesto (por ejemplo `confirmar.html?g=familia-perez`), funciona
   igual: el sitio detecta el `?g=` de la URL y salta directo al formulario.
 - Un mismo link puede confirmar **varias personas** (pareja, familia con
   hijos), cada una con su propia asistencia y restricciones alimentarias.
+- Esa misma identidad (nombre/grupo) es la que se usa para reservar
+  regalos en `regalos.html` — no hace falta identificarse dos veces.
 
 ## Setup
 
 ### 1. Backend (Apps Script)
 
-Ya tenés esto configurado de la versión anterior — solo hay que actualizar
-el código:
+Ya tenés esto configurado de versiones anteriores — solo hay que
+actualizar el código (por ejemplo para que funcione la reserva de
+regalos, que necesita esta versión):
 
 1. Abrí tu proyecto en [script.google.com](https://script.google.com).
 2. Reemplazá todo el contenido por el nuevo `Code.gs`.
@@ -65,14 +75,14 @@ Abrí `content.js` y completá:
 - `rsvp.deadlineText` — fecha límite para confirmar.
 - Cualquier otro texto (textos de botones, mensajes de confirmación, etc.) también vive acá.
 
-No hace falta tocar `index.html` ni `confirmados.html` para estos cambios.
+No hace falta tocar ningún `.html` para estos cambios.
 
 ### 3. Abrir el sitio
 
 Abrí `index.html` en el navegador (doble clic, o subilo a GitHub Pages /
-Netlify / cualquier hosting estático) y probá el flujo completo: escribí un
-nombre, confirmá una persona, y verificá que aparezca en Drive dentro de
-`rsvps.json`.
+Netlify / cualquier hosting estático), andá a "Confirmar" y probá el flujo
+completo: escribí un nombre, confirmá una persona, y verificá que aparezca
+en Drive dentro de `rsvps.json`.
 
 Para ver las respuestas agregadas, abrí `confirmados.html` e ingresá la
 contraseña que pusiste en `ADMIN_PASSWORD`.
@@ -83,7 +93,7 @@ Es opcional, pero te sirve para dos cosas:
 
 1. **Links personalizados**: si sumás un grupo a `GUEST_LIST` en `guests.js`
    (por ejemplo `{ label: 'Familia Pérez', people: ['Juan Pérez', 'María
-   Gómez'] }`), el link `index.html?g=familia-perez` arranca con esos
+   Gómez'] }`), el link `confirmar.html?g=familia-perez` arranca con esos
    nombres ya cargados — la familia sólo tiene que marcar asistencia y
    restricciones, no escribir todo de cero. El invitado igual puede editar,
    agregar o quitar personas de ahí en más.
@@ -97,19 +107,44 @@ el sitio arranca una confirmación nueva para esa persona/familia como
 siempre. `guests.js` sólo agrega la precarga y el seguimiento — para
 agregar o quitar un grupo, sumás o borrás un objeto de la lista.
 
-## Lista de regalos (`regalos.html`)
+## Lista de regalos con reserva (`regalos.html`)
 
 El contenido vive en `content.js` → `CONTENT.wishlist`. Para agregar o
 quitar una idea de regalo, sumá o borrá un objeto de `wishlist.items`:
 
 ```js
-{ name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' }
+{ key: 'sabanas', name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' }
 ```
 
 `link` es opcional (por ejemplo a una tienda online); si lo dejás vacío, la
-tarjeta se muestra sin botón. También hay un bloque opcional para un
-regalo en efectivo (`wishlist.cashText` / `wishlist.cashAlias`) — si los
-dejás vacíos, esa tarjeta no se muestra.
+tarjeta se muestra sin botón. `key` es el identificador estable del
+regalo — una vez que alguien lo reservó, no le cambies el `key` (podés
+cambiar `name`, `note` y `link` libremente). También hay un bloque
+opcional para un regalo en efectivo (`wishlist.cashText` /
+`wishlist.cashAlias`) — si los dejás vacíos, esa tarjeta no se muestra.
+
+**Reservas por grupo:** cada invitado se identifica con el mismo nombre/
+grupo que usa para confirmar asistencia (comparte el mismo `localStorage`
+que `index.html`, así que si ya confirmó, `regalos.html` ya sabe quién
+es). Desde ahí puede reservar un regalo — que otros grupos van a ver como
+"Reservado por Familia X" — y deshacer la reserva si se arrepiente. Las
+reservas se guardan en `regalos.json` en tu carpeta de Drive (igual que
+`rsvps.json`), así que se ven iguales para todos los que entren al sitio,
+no sólo en el navegador de quien reservó.
+
+Si dos grupos llegan a reservar el mismo regalo casi al mismo tiempo, el
+sitio guarda ambas reservas (no descarta ninguna) y te lo marca como
+conflicto — mirá la sección "Regalos reservados" en `confirmados.html`
+para verlo y coordinar con ellos manualmente. Es un caso raro gracias a
+un lock en el backend, pero puede pasar.
+
+Si preferís que no se muestre el nombre de quién reservó cada regalo
+(sólo "ya fue reservado" / "libre"), poné `wishlist.showClaimerName` en
+`false` en `content.js`.
+
+> Esta función necesita la versión nueva de `Code.gs` (ver "Backend" más
+> abajo) — sin redeployarla, `regalos.html` va a mostrar los regalos
+> pero el botón de reservar no va a hacer nada.
 
 ## Código QR para subir fotos (`fotos.html`)
 

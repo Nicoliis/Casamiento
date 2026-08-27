@@ -11,19 +11,6 @@
 <style>
   body { position: relative; }
 
-  .back-link {
-    position: relative;
-    z-index: 1;
-    display: block;
-    text-align: center;
-    padding: 16px 12px 0;
-    font-family: var(--sans);
-    font-size: 0.82rem;
-    color: var(--moss);
-    text-decoration: none;
-  }
-  .back-link:hover { text-decoration: underline; }
-
   header.hero {
     position: relative;
     z-index: 1;
@@ -98,7 +85,14 @@
 
 <div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
 
-<a class="back-link" href="index.html" id="back-link"></a>
+<nav class="site-nav">
+  <a href="index.html#inicio" id="nav-home"></a>
+  <a href="index.html#ceremonia" id="nav-ceremony"></a>
+  <a href="index.html#recepcion" id="nav-reception"></a>
+  <a href="confirmar.html" id="nav-rsvp"></a>
+  <a href="regalos.html" id="nav-wishlist"></a>
+  <a href="fotos.html" id="nav-photos" class="active"></a>
+</nav>
 
 <header class="hero">
   <p class="kicker" id="txt-kicker"></p>
@@ -135,7 +129,12 @@
 
   function applyContent() {
     document.title = C.title + ' — ' + CONTENT.siteTitle;
-    $('back-link').textContent = CONTENT.common.backToInvite;
+    $('nav-home').textContent = CONTENT.nav.home;
+    $('nav-ceremony').textContent = CONTENT.nav.ceremony;
+    $('nav-reception').textContent = CONTENT.nav.reception;
+    $('nav-rsvp').textContent = CONTENT.nav.rsvp;
+    $('nav-wishlist').textContent = CONTENT.nav.wishlist;
+    $('nav-photos').textContent = CONTENT.nav.photos;
     $('txt-kicker').textContent = C.kicker;
     $('txt-title').textContent = C.title;
     $('txt-intro').textContent = C.intro;

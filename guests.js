@@ -6,7 +6,7 @@
 // vez que entra, como siempre). Pero si precargás acá los
 // grupos/familias que invitaste, pasan dos cosas:
 //
-//   1. Podés mandar links personalizados (index.html?g=perez)
+//   1. Podés mandar links personalizados (confirmar.html?g=perez)
 //      que ya vienen con los nombres de esa familia cargados.
 //   2. El panel confirmados.html muestra qué grupos precargados
 //      todavía NO respondieron (ni sí ni no), para que sepas a
@@ -14,7 +14,7 @@
 //
 // Para agregar un grupo, sumá un objeto a la lista. Para
 // quitarlo, borrá el objeto. Nada más — no hace falta tocar
-// index.html ni confirmados.html.
+// ningún archivo .html.
 //
 //   label  -> cómo se muestra el grupo (ej: "Familia Pérez").
 //   people -> nombres sugeridos que aparecen precargados la
@@ -31,7 +31,7 @@ const GUEST_LIST = [
 ];
 
 // ------------------------------------------------------------
-// Utilidades compartidas (usadas por index.html y confirmados.html)
+// Utilidades compartidas (usadas por confirmar.html, regalos.html y confirmados.html)
 // No hace falta tocar nada de acá abajo.
 // ------------------------------------------------------------
 

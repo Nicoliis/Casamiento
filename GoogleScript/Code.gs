@@ -1,10 +1,14 @@
 /**
- * Wedding Invitation — Google Apps Script backend (RSVP)
+ * Wedding Invitation — Google Apps Script backend (RSVP + regalos)
  * ---------------------------------------------------------------
  * Deploy as a Web App (Execute as: Me, Who has access: Anyone).
- * Stores one JSON file (rsvps.json) in your Drive folder, keyed by
- * a "guest" slug that comes from the invitation URL (?g=...). Each
- * guest link reads/writes only its own record.
+ * Stores JSON files in your Drive folder:
+ *   - rsvps.json   keyed by a "guest" slug (from ?g=... / the RSVP
+ *                  identity), one record per guest group.
+ *   - regalos.json keyed by wishlist item key, each holding the
+ *                  list of guest groups that claimed that gift.
+ * Guests never sign in to Google — everything runs under your
+ * account via this Web App.
  *
  * SETUP
  * 1. Reuse the same Drive folder + FOLDER_ID you already had.
@@ -19,6 +23,7 @@
 
 const FOLDER_ID = '********';
 const RSVP_FILENAME = 'rsvps.json';
+const CLAIMS_FILENAME = 'regalos.json';
 
 // Change this before deploying — protects the aggregated admin view.
 const ADMIN_PASSWORD = '********';
@@ -27,14 +32,14 @@ function getFolder_() {
   return DriveApp.getFolderById(FOLDER_ID);
 }
 
-function getRsvpFile_(folder) {
-  const files = folder.getFilesByName(RSVP_FILENAME);
+function getJsonFile_(folder, filename) {
+  const files = folder.getFilesByName(filename);
   if (files.hasNext()) return files.next();
-  return folder.createFile(RSVP_FILENAME, '{}', MimeType.PLAIN_TEXT);
+  return folder.createFile(filename, '{}', MimeType.PLAIN_TEXT);
 }
 
-function readRsvps_(folder) {
-  const file = getRsvpFile_(folder);
+function readJson_(folder, filename) {
+  const file = getJsonFile_(folder, filename);
   const content = file.getBlob().getDataAsString();
   try {
     const parsed = JSON.parse(content || '{}');
@@ -44,10 +49,15 @@ function readRsvps_(folder) {
   }
 }
 
-function writeRsvps_(folder, data) {
-  const file = getRsvpFile_(folder);
+function writeJson_(folder, filename, data) {
+  const file = getJsonFile_(folder, filename);
   file.setContent(JSON.stringify(data, null, 2));
 }
+
+function readRsvps_(folder) { return readJson_(folder, RSVP_FILENAME); }
+function writeRsvps_(folder, data) { writeJson_(folder, RSVP_FILENAME, data); }
+function readClaims_(folder) { return readJson_(folder, CLAIMS_FILENAME); }
+function writeClaims_(folder, data) { writeJson_(folder, CLAIMS_FILENAME, data); }
 
 function jsonResponse_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
@@ -58,9 +68,38 @@ function normalizeGuestId_(id) {
   return String(id || '').trim().toLowerCase().slice(0, 120);
 }
 
+function normalizeItemKey_(id) {
+  return String(id || '').trim().toLowerCase().slice(0, 120);
+}
+
+/**
+ * Runs a read-modify-write against regalos.json under a script-wide
+ * lock, so two guests claiming at the same instant can't silently
+ * overwrite each other's write. fn receives the current claims object
+ * and must return the new claims object to save.
+ */
+function withClaimsLock_(folder, fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const claims = readClaims_(folder);
+    const updated = fn(claims);
+    writeClaims_(folder, updated);
+    return updated;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /**
  * GET ?action=get&guest=<slug>
  *   -> { ok, exists, data }  — a single guest's own RSVP record.
+ *
+ * GET ?action=claims
+ *   -> { ok, claims }  — every wishlist claim, for every item. Public
+ *      (no password) on purpose: guests need to see it to avoid
+ *      claiming the same gift twice. Shape:
+ *      { "<itemKey>": [ { guest, label, claimedAt }, ... ] }
  */
 function doGet(e) {
   try {
@@ -75,6 +114,10 @@ function doGet(e) {
       return jsonResponse_({ ok: true, exists: !!data, data: data });
     }
 
+    if (action === 'claims') {
+      return jsonResponse_({ ok: true, claims: readClaims_(folder) });
+    }
+
     return jsonResponse_({ ok: false, error: 'Unknown action' });
   } catch (err) {
     return jsonResponse_({ ok: false, error: String(err) });
@@ -82,15 +125,24 @@ function doGet(e) {
 }
 
 /**
- * POST body (text/plain, JSON-encoded) — two shapes:
+ * POST body (text/plain, JSON-encoded) — several shapes:
  *
- * 1) Upsert a guest's RSVP:
+ * 1) Upsert a guest's RSVP (no "action" field):
  *    { guest, label, people: [{name, attending, diet:[...], dietOther}], comments }
  *    -> { ok, data }
  *
  * 2) Admin: fetch every RSVP (password-gated, kept out of the URL):
  *    { action: 'summary', key: '<ADMIN_PASSWORD>' }
  *    -> { ok, rsvps }
+ *
+ * 3) Claim a wishlist item for a guest group (idempotent — claiming
+ *    twice with the same guest+item is a no-op):
+ *    { action: 'claim', guest, label, item }
+ *    -> { ok, claims }
+ *
+ * 4) Undo a guest's own claim:
+ *    { action: 'unclaim', guest, item }
+ *    -> { ok, claims }
  */
 function doPost(e) {
   try {
@@ -102,7 +154,46 @@ function doPost(e) {
       if (String(body.key || '') !== ADMIN_PASSWORD) {
         return jsonResponse_({ ok: false, error: 'unauthorized' });
       }
-      return jsonResponse_({ ok: true, rsvps: readRsvps_(folder) });
+      return jsonResponse_({ ok: true, rsvps: readRsvps_(folder), claims: readClaims_(folder) });
+    }
+
+    if (body.action === 'claim') {
+      const guest = normalizeGuestId_(body.guest);
+      const item = normalizeItemKey_(body.item);
+      if (!guest) throw new Error('Missing guest id');
+      if (!item) throw new Error('Missing item key');
+      const label = String(body.label || '').trim().slice(0, 150) || guest;
+
+      const claims = withClaimsLock_(folder, function (current) {
+        const list = Array.isArray(current[item]) ? current[item].slice() : [];
+        if (!list.some(function (c) { return c.guest === guest; })) {
+          list.push({ guest: guest, label: label, claimedAt: new Date().toISOString() });
+        }
+        current[item] = list;
+        return current;
+      });
+
+      return jsonResponse_({ ok: true, claims: claims });
+    }
+
+    if (body.action === 'unclaim') {
+      const guest = normalizeGuestId_(body.guest);
+      const item = normalizeItemKey_(body.item);
+      if (!guest) throw new Error('Missing guest id');
+      if (!item) throw new Error('Missing item key');
+
+      const claims = withClaimsLock_(folder, function (current) {
+        const list = (Array.isArray(current[item]) ? current[item] : [])
+          .filter(function (c) { return c.guest !== guest; });
+        if (list.length) {
+          current[item] = list;
+        } else {
+          delete current[item];
+        }
+        return current;
+      });
+
+      return jsonResponse_({ ok: true, claims: claims });
     }
 
     const guest = normalizeGuestId_(body.guest);

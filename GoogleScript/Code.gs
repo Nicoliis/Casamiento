@@ -11,24 +11,45 @@
  * account via this Web App.
  *
  * SETUP
- * 1. Reuse the same Drive folder + FOLDER_ID you already had.
+ * 1. Set FOLDER_ID below to your real Google Drive folder ID (the
+ *    long string in the folder's URL: drive.google.com/drive/folders/<ID>).
  * 2. Set ADMIN_PASSWORD below to a passphrase only you know — it
  *    protects the aggregated view in confirmados.html.
  * 3. Paste this file into your existing Apps Script project
  *    (replacing the old code), then:
  *    Deploy > Manage deployments > pencil icon > New version > Deploy.
  *    This keeps the same /exec URL that's already in config.js.
+ *
+ * ⚠️ IMPORTANT: every time you paste a new version of this file in,
+ * it OVERWRITES FOLDER_ID and ADMIN_PASSWORD below with whatever
+ * placeholder text is checked into this repo — pasting the file is
+ * not enough, you must re-enter your real values every single time,
+ * or the entire backend breaks (RSVP, admin panel, gift claims, all
+ * of it) with a cryptic Drive error instead of a clear one. This
+ * version at least makes that failure obvious instead of cryptic —
+ * see checkConfig_() below.
  * ---------------------------------------------------------------
  */
 
-const FOLDER_ID = '********';
+const FOLDER_ID = 'PASTE_YOUR_REAL_DRIVE_FOLDER_ID_HERE';
 const RSVP_FILENAME = 'rsvps.json';
 const CLAIMS_FILENAME = 'regalos.json';
 
 // Change this before deploying — protects the aggregated admin view.
-const ADMIN_PASSWORD = '********';
+const ADMIN_PASSWORD = 'PASTE_YOUR_REAL_ADMIN_PASSWORD_HERE';
+
+function checkConfig_() {
+  if (!FOLDER_ID || FOLDER_ID.indexOf('PASTE_YOUR') !== -1) {
+    throw new Error(
+      'Code.gs sin configurar: falta pegar tu FOLDER_ID real (reemplazá el ' +
+      'placeholder en la constante FOLDER_ID, arriba del todo del archivo) y ' +
+      'volver a Deploy > Manage deployments > New version.'
+    );
+  }
+}
 
 function getFolder_() {
+  checkConfig_();
   return DriveApp.getFolderById(FOLDER_ID);
 }
 

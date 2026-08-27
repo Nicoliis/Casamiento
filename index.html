@@ -167,7 +167,7 @@
     <div class="cd-box"><strong id="cd-seconds">00</strong><span id="cd-seconds-label"></span></div>
   </div>
 
-  <a href="confirmar.html" class="btn btn-primary" id="txt-cta"></a>
+  <a href="confirmar.html" class="btn btn-primary" id="txt-cta" data-keep-guest></a>
 </header>
 
 <section class="section reveal" id="ceremonia">
@@ -206,6 +206,7 @@
 </footer>
 
 <script src="content.js"></script>
+<script src="guests.js"></script>
 <script>
 (function () {
   'use strict';
@@ -339,6 +340,10 @@
     spawnLeaves();
     startCountdown();
     startRevealObserver();
+    // Sin localStorage: si llegamos con ?g= (por ejemplo desde el
+    // menú de otra página), lo reenviamos a todos los links propios
+    // para que la identidad no se pierda al seguir navegando.
+    applyGuestParamToNav(getGuestParamFromUrl());
   });
 })();
 </script>

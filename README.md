@@ -32,36 +32,61 @@ adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
   precargada: cada persona/familia escribe su nombre la primera vez que
   entra (paso "¿Quién sos?").
 - Ese nombre se convierte en un identificador (`slug`) y queda en la URL
-  como `?g=familia-perez`. Volver a abrir ese mismo link — o el mismo
-  navegador, gracias a `localStorage` — carga y permite **editar** esa misma
-  respuesta en vez de crear una nueva.
+  como `?g=familia-perez`. El sitio **no usa `localStorage` ni cookies
+  para recordar quién sos** — el `?g=` de la URL es la única forma de
+  volver a tu respuesta y poder editarla; sin ese link, entrás como
+  invitado nuevo. Por eso el link es lo que hay que guardar/compartir,
+  no "el mismo navegador".
 - Si vos preferís armar los links a mano y mandarlos por WhatsApp con el
   nombre ya puesto (por ejemplo `confirmar.html?g=familia-perez`), funciona
   igual: el sitio detecta el `?g=` de la URL y salta directo al formulario.
 - Un mismo link puede confirmar **varias personas** (pareja, familia con
   hijos), cada una con su propia asistencia y restricciones alimentarias.
-- Esa misma identidad (nombre/grupo) es la que se usa para reservar
-  regalos en `regalos.html` — no hace falta identificarse dos veces.
+- Esa misma identidad (el slug del `?g=`) es la que se usa para reservar
+  regalos en `regalos.html?g=familia-perez`.
+- **El `?g=` viaja solo por todo el menú**, en las cuatro páginas
+  públicas: si entrás con `?g=familia-perez` a cualquiera de ellas, todos
+  los links del menú de arriba (Inicio, Ceremonia, Recepción, Confirmar,
+  Regalos, Fotos) se reescriben para llevarlo puesto. Así, un invitado
+  identificado puede pasearse por todo el sitio — incluso por `fotos.html`,
+  que no usa la identidad para nada — sin perderla ni tener que volver a
+  escribir su nombre. Esto lo hace `applyGuestParamToNav()` en
+  `guests.js`, que corre en las cuatro páginas.
 
 ## Setup
 
 ### 1. Backend (Apps Script)
 
-Ya tenés esto configurado de versiones anteriores — solo hay que
-actualizar el código (por ejemplo para que funcione la reserva de
-regalos, que necesita esta versión):
+> ⚠️ **Este archivo del repo tiene `FOLDER_ID` y `ADMIN_PASSWORD` en
+> placeholder a propósito** (no guardamos tus valores reales acá). Cada
+> vez que pegás este archivo en script.google.com, **pisás** lo que
+> tenías puesto ahí antes — tenés que volver a escribir tus valores
+> reales todas las veces, no es "una vez y ya está". Si te olvidás, el
+> backend entero deja de funcionar (RSVP, panel de admin, reserva de
+> regalos — todo), aunque el sitio se vea normal.
 
 1. Abrí tu proyecto en [script.google.com](https://script.google.com).
 2. Reemplazá todo el contenido por el nuevo `Code.gs`.
-3. `FOLDER_ID` ya está seteado a tu carpeta.
-4. Cambiá `ADMIN_PASSWORD` por una contraseña propia — protege el panel
-   `confirmados.html`.
+3. Buscá la línea `const FOLDER_ID = '...'` y pegá el ID real de tu
+   carpeta de Drive — es el texto largo en la URL de la carpeta:
+   `drive.google.com/drive/folders/`**`ESTE-ID-ACÁ`**.
+4. Buscá `const ADMIN_PASSWORD = '...'` y poné una contraseña propia —
+   protege el panel `confirmados.html`.
 5. **Deploy → Manage deployments → ✏️ (editar) → New version → Deploy.**
    Esto mantiene la misma URL `/exec` que ya tenías, así que no hace falta
-   tocar `config.js`
+   tocar `config.js`.
+6. Probá que haya quedado bien: abrí esta URL en el navegador (reemplazando
+   por tu URL real de `config.js`) y confirmá que la respuesta sea
+   `{"ok":true,...}` y no un error:
+   `TU_URL_DE_APPS_SCRIPT/exec?action=claims`
 
 > Si en algún momento creás un deployment nuevo (no una nueva versión del
 > mismo), la URL cambia y hay que actualizar `config.js`.
+
+Esta versión de `Code.gs` además detecta si te olvidaste de pegar el
+`FOLDER_ID` real y devuelve un error claro en vez del típico
+`"ID de archivo o carpeta no válido: ********"` de Google, para que sea
+más fácil de diagnosticar la próxima vez.
 
 ### 2. Contenido del sitio
 
@@ -123,10 +148,17 @@ cambiar `name`, `note` y `link` libremente). También hay un bloque
 opcional para un regalo en efectivo (`wishlist.cashText` /
 `wishlist.cashAlias`) — si los dejás vacíos, esa tarjeta no se muestra.
 
-**Reservas por grupo:** cada invitado se identifica con el mismo nombre/
-grupo que usa para confirmar asistencia (comparte el mismo `localStorage`
-que `index.html`, así que si ya confirmó, `regalos.html` ya sabe quién
-es). Desde ahí puede reservar un regalo — que otros grupos van a ver como
+**Reservas por grupo:** cada invitado se identifica con el mismo `?g=` de
+la URL que usa para confirmar asistencia (no hay `localStorage` de por
+medio — ver la sección anterior). Un link personalizado como
+`regalos.html?g=familia-perez` (el mismo slug que
+`confirmar.html?g=familia-perez`) identifica al grupo automáticamente. El
+nombre lindo para mostrar ("Familia Pérez", no "familia-perez") se
+resuelve así: si ese grupo ya confirmó asistencia, se trae su `label`
+guardado en `rsvps.json`; si no, se busca en `guests.js`; si tampoco está
+ahí, se usa el texto tal cual venga en la URL.
+
+Desde ahí puede reservar un regalo — que otros grupos van a ver como
 "Reservado por Familia X" — y deshacer la reserva si se arrepiente. Las
 reservas se guardan en `regalos.json` en tu carpeta de Drive (igual que
 `rsvps.json`), así que se ven iguales para todos los que entren al sitio,

@@ -31,7 +31,7 @@ const GUEST_LIST = [
 ];
 
 // ------------------------------------------------------------
-// Utilidades compartidas (usadas por confirmar.html, regalos.html y confirmados.html)
+// Utilidades compartidas (usadas por todas las páginas públicas y por confirmados.html)
 // No hace falta tocar nada de acá abajo.
 // ------------------------------------------------------------
 
@@ -59,4 +59,36 @@ function findGuestListEntry(slug) {
     if (getGuestSlug(GUEST_LIST[i]) === slug) return GUEST_LIST[i];
   }
   return null;
+}
+
+// ------------------------------------------------------------
+// Hilo del ?g= entre páginas (sin localStorage — ver README).
+// Cada página lee su propio ?g= (si lo tiene) y lo reescribe en
+// todos los links del menú de arriba, así la identidad no se
+// pierde aunque el invitado pase por una página que no la usa
+// para nada (por ejemplo fotos.html).
+// ------------------------------------------------------------
+
+function getGuestParamFromUrl() {
+  return new URLSearchParams(window.location.search).get('g');
+}
+
+// Reescribe el href de todos los links del menú (y de cualquier
+// otro marcado con [data-keep-guest]) para que apunten a la misma
+// página pero con ?g=<guestId> — o sin él, si guestId es null.
+// Un link a un ancla de esta misma página (ej. "#ceremonia", sin
+// nombre de archivo) se deja intacto: el navegador ya conserva el
+// ?g= actual solo al navegar dentro del mismo documento.
+function applyGuestParamToNav(guestId) {
+  document.querySelectorAll('.site-nav a, [data-keep-guest]').forEach(function (a) {
+    var href = a.getAttribute('href');
+    if (!href) return;
+    var hashIdx = href.indexOf('#');
+    var path = hashIdx === -1 ? href : href.slice(0, hashIdx);
+    var hash = hashIdx === -1 ? '' : href.slice(hashIdx);
+    if (!path) return;
+    var qIdx = path.indexOf('?');
+    var base = qIdx === -1 ? path : path.slice(0, qIdx);
+    a.setAttribute('href', base + (guestId ? ('?g=' + encodeURIComponent(guestId)) : '') + hash);
+  });
 }

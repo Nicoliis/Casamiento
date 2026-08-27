@@ -298,9 +298,25 @@
   }
 
   // ---------------------------------------------------------
-  // Identidad (compartida con la confirmación de asistencia:
-  // mismas claves de localStorage que index.html).
+  // Identidad (compartida con la confirmación de asistencia: mismo
+  // ?g= en la URL que confirmar.html — sin localStorage, así que un
+  // link personalizado como regalos.html?g=familia-perez es la única
+  // forma de que el sitio detecte el grupo solo).
   // ---------------------------------------------------------
+  function setUrlGuest(guestId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('g', guestId);
+    window.history.replaceState(null, '', url.toString());
+  }
+
+  // Sin localStorage: la identidad sólo vive en el ?g= de la URL. Para
+  // que navegar por el menú no la pierda, reescribimos TODOS sus links
+  // con el mismo ?g= cada vez que cambia (applyGuestParamToNav viene
+  // de guests.js).
+  function updateNavLinks() {
+    applyGuestParamToNav(currentGuestId);
+  }
+
   function showIdentified() {
     $('identify-step').hidden = true;
     $('identified-bar').hidden = false;
@@ -315,28 +331,57 @@
   function setIdentity(guestId, label) {
     currentGuestId = guestId;
     currentLabel = label || guestId;
-    localStorage.setItem('weddingGuestId', guestId);
-    localStorage.setItem('weddingGuestLabel', currentLabel);
+    setUrlGuest(guestId);
+    updateNavLinks();
     showIdentified();
   }
 
   function clearIdentity() {
-    localStorage.removeItem('weddingGuestId');
-    localStorage.removeItem('weddingGuestLabel');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('g');
+    window.history.replaceState(null, '', url.toString());
     currentGuestId = null;
     currentLabel = null;
     $('identify-input').value = '';
     showIdentifyStep();
+    updateNavLinks();
     renderItems();
   }
 
+  // Un link como regalos.html?g=familia-perez sólo trae el slug, no el
+  // nombre lindo ("Familia Pérez"). Lo resolvemos, en este orden: el
+  // label guardado en el backend si ese grupo ya confirmó asistencia
+  // (rsvps.json, vía confirmar.html), si no el de guests.js, y si no
+  // el texto crudo de la URL. La llamada al backend es de sólo lectura
+  // y no bloquea la UI — si encuentra algo mejor, actualiza el cartel.
+  async function refineLabelFromBackend(guestId) {
+    if (!isConfigured()) return;
+    try {
+      const url = APPS_SCRIPT_URL + '?action=get&guest=' + encodeURIComponent(guestId);
+      const res = await fetch(url);
+      const result = await res.json();
+      if (result.ok && result.exists && result.data && result.data.label && currentGuestId === guestId) {
+        currentLabel = result.data.label;
+        $('identified-label').textContent = currentLabel;
+      }
+    } catch (e) {
+      // Sin conexión o backend no configurado: nos quedamos con el
+      // label que ya teníamos (guests.js o el texto de la URL).
+    }
+  }
+
+  function identifyFrom(guestId, fallbackLabel) {
+    const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
+    setIdentity(guestId, preset ? preset.label : fallbackLabel);
+    refineLabelFromBackend(guestId);
+  }
+
   function initIdentity() {
-    const storedId = localStorage.getItem('weddingGuestId');
-    const storedLabel = localStorage.getItem('weddingGuestLabel');
-    if (storedId) {
-      currentGuestId = storedId;
-      currentLabel = storedLabel || storedId;
-      showIdentified();
+    const params = new URLSearchParams(window.location.search);
+    const urlGuest = params.get('g');
+
+    if (urlGuest) {
+      identifyFrom(slugifyGuestLabel(urlGuest), urlGuest);
     } else {
       showIdentifyStep();
     }
@@ -346,8 +391,7 @@
       if (!raw) return;
       const guestId = slugifyGuestLabel(raw);
       if (!guestId) return;
-      const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
-      setIdentity(guestId, preset ? preset.label : raw);
+      identifyFrom(guestId, raw);
       renderItems();
     });
     $('identify-input').addEventListener('keydown', (e) => {

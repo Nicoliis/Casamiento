@@ -476,6 +476,14 @@
     window.history.replaceState(null, '', url.toString());
   }
 
+  // Sin localStorage: la identidad sólo vive en el ?g= de la URL. Para
+  // que navegar por el menú no la pierda, reescribimos TODOS sus links
+  // con el mismo ?g= cada vez que cambia (applyGuestParamToNav viene
+  // de guests.js).
+  function updateNavLinks() {
+    applyGuestParamToNav(currentGuestId);
+  }
+
   function showIdentifyStep() {
     $('identify-step').hidden = false;
     $('rsvp-form').hidden = true;
@@ -485,9 +493,8 @@
   async function loadGuest(guestId, label) {
     currentGuestId = guestId;
     currentLabel = label || guestId;
-    localStorage.setItem('weddingGuestId', guestId);
-    localStorage.setItem('weddingGuestLabel', currentLabel);
     setUrlGuest(guestId);
+    updateNavLinks();
 
     $('identify-step').hidden = true;
     $('rsvp-form').hidden = true;
@@ -534,14 +541,14 @@
   }
 
   function resetIdentity() {
-    localStorage.removeItem('weddingGuestId');
-    localStorage.removeItem('weddingGuestLabel');
     const url = new URL(window.location.href);
     url.searchParams.delete('g');
     window.history.replaceState(null, '', url.toString());
     currentGuestId = null;
+    currentLabel = null;
     $('identify-input').value = '';
     showIdentifyStep();
+    updateNavLinks();
   }
 
   function initRsvpFlow() {
@@ -554,13 +561,9 @@
 
     const params = new URLSearchParams(window.location.search);
     const urlGuest = params.get('g');
-    const storedGuest = localStorage.getItem('weddingGuestId');
-    const storedLabel = localStorage.getItem('weddingGuestLabel');
 
     if (urlGuest) {
-      loadGuest(slugify(urlGuest), storedGuest === slugify(urlGuest) ? storedLabel : urlGuest);
-    } else if (storedGuest) {
-      loadGuest(storedGuest, storedLabel);
+      loadGuest(slugify(urlGuest), urlGuest);
     } else {
       showIdentifyStep();
     }

@@ -234,6 +234,8 @@
   <a href="#ceremonia" id="nav-ceremony"></a>
   <a href="#recepcion" id="nav-reception"></a>
   <a href="#confirmar" id="nav-rsvp"></a>
+  <a href="regalos.html" id="nav-wishlist"></a>
+  <a href="fotos.html" id="nav-photos"></a>
 </nav>
 
 <header class="hero" id="inicio">
@@ -306,7 +308,8 @@
       <label for="identify-input" id="lbl-identify-title"></label>
       <p class="status-msg muted" id="txt-identify-text" style="margin-top:-2px;margin-bottom:12px;"></p>
       <div class="identify-row">
-        <input type="text" id="identify-input" maxlength="150">
+        <input type="text" id="identify-input" maxlength="150" list="guest-suggestions" autocomplete="off">
+        <datalist id="guest-suggestions"></datalist>
         <button type="button" class="btn btn-primary" id="identify-continue-btn"></button>
       </div>
     </div>
@@ -344,6 +347,7 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
+<script src="guests.js"></script>
 <script>
 (function () {
   'use strict';
@@ -363,6 +367,8 @@
     $('nav-ceremony').textContent = C.nav.ceremony;
     $('nav-reception').textContent = C.nav.reception;
     $('nav-rsvp').textContent = C.nav.rsvp;
+    $('nav-wishlist').textContent = C.nav.wishlist;
+    $('nav-photos').textContent = C.nav.photos;
 
     $('txt-kicker').textContent = C.hero.kicker;
     $('txt-partner1').textContent = C.couple.partner1;
@@ -492,18 +498,18 @@
   // ---------------------------------------------------------
   // Utilidades
   // ---------------------------------------------------------
-  function slugify(str) {
-    // Strip combining diacritical marks (U+0300–U+036F) after NFD
-    // normalization, e.g. "Pérez" -> "pe" + combining-acute -> "perez".
-    var diacriticStart = String.fromCharCode(0x0300);
-    var diacriticEnd = String.fromCharCode(0x036f);
-    var diacritics = new RegExp('[' + diacriticStart + '-' + diacriticEnd + ']', 'g');
-    return String(str || '')
-      .normalize('NFD').replace(diacritics, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 120);
+  // slugifyGuestLabel() y GUEST_LIST vienen de guests.js.
+  var slugify = slugifyGuestLabel;
+
+  function populateGuestSuggestions() {
+    const dl = $('guest-suggestions');
+    if (!dl || typeof GUEST_LIST === 'undefined') return;
+    dl.innerHTML = '';
+    GUEST_LIST.forEach((g) => {
+      const opt = document.createElement('option');
+      opt.value = g.label;
+      dl.appendChild(opt);
+    });
   }
 
   function isConfigured() {
@@ -740,13 +746,25 @@
     $('confirming-label').textContent = currentLabel;
 
     if (result.ok && result.exists && result.data) {
+      // Ya había una confirmación guardada para este grupo: la editamos.
       currentLabel = result.data.label || currentLabel;
       $('confirming-label').textContent = currentLabel;
       result.data.people.forEach((p) => addPersonRow(p));
       $('comments').value = result.data.comments || '';
       $('submit-btn').textContent = C.rsvp.update;
     } else {
-      addPersonRow({});
+      // Sin confirmación previa: si el grupo está precargado en
+      // guests.js, arrancamos con esos nombres sugeridos (todavía
+      // sin marcar asistencia) en vez de una fila en blanco.
+      const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
+      if (preset) {
+        currentLabel = preset.label || currentLabel;
+        $('confirming-label').textContent = currentLabel;
+        const names = (preset.people && preset.people.length) ? preset.people : [''];
+        names.forEach((name) => addPersonRow({ name: name }));
+      } else {
+        addPersonRow({});
+      }
       $('submit-btn').textContent = C.rsvp.submit;
     }
 
@@ -855,6 +873,7 @@
   // ---------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
     applyContent();
+    populateGuestSuggestions();
     spawnLeaves();
     startCountdown();
     startRevealObserver();

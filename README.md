@@ -12,10 +12,13 @@ invitados no necesitan iniciar sesión en Google.
 |---|---|
 | `Code.gs` | Backend (Google Apps Script). Lee/escribe `rsvps.json` en tu carpeta de Drive. |
 | `config.js` | Un solo lugar con la URL de tu Web App de Apps Script. |
-| `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, etc. Editá solo este archivo para cambiar palabras. |
+| `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, la lista de regalos, etc. Editá solo este archivo para cambiar palabras. |
+| `guests.js` | Lista opcional de familias/grupos invitados, para precargar nombres y ver quién no respondió. |
 | `theme.css` | Paleta de colores y estilos compartidos (verde/naturaleza). |
 | `index.html` | La invitación pública: portada, ceremonia/recepción, código de vestimenta y formulario de confirmación. |
-| `confirmados.html` | Panel privado (con contraseña) que agrega todas las confirmaciones recibidas. |
+| `confirmados.html` | Panel privado (con contraseña) que agrega todas las confirmaciones recibidas, más los grupos que todavía no respondieron. |
+| `regalos.html` | Lista de regalos / ideas para el casamiento. |
+| `fotos.html` | Página con el código QR para subir fotos durante la fiesta. |
 
 ## Cómo funciona el link de cada invitado
 
@@ -73,6 +76,59 @@ nombre, confirmá una persona, y verificá que aparezca en Drive dentro de
 
 Para ver las respuestas agregadas, abrí `confirmados.html` e ingresá la
 contraseña que pusiste en `ADMIN_PASSWORD`.
+
+## Precargar grupos de invitados (`guests.js`)
+
+Es opcional, pero te sirve para dos cosas:
+
+1. **Links personalizados**: si sumás un grupo a `GUEST_LIST` en `guests.js`
+   (por ejemplo `{ label: 'Familia Pérez', people: ['Juan Pérez', 'María
+   Gómez'] }`), el link `index.html?g=familia-perez` arranca con esos
+   nombres ya cargados — la familia sólo tiene que marcar asistencia y
+   restricciones, no escribir todo de cero. El invitado igual puede editar,
+   agregar o quitar personas de ahí en más.
+2. **Saber quién falta responder**: en `confirmados.html` aparece una
+   sección "Todavía no respondieron" con los grupos de `GUEST_LIST` que
+   todavía no tienen ninguna confirmación guardada (ni sí ni no).
+
+El paso de "¿Quién sos?" sigue funcionando para cualquiera igual que antes
+(no es una lista cerrada): si alguien escribe un nombre que no precargaste,
+el sitio arranca una confirmación nueva para esa persona/familia como
+siempre. `guests.js` sólo agrega la precarga y el seguimiento — para
+agregar o quitar un grupo, sumás o borrás un objeto de la lista.
+
+## Lista de regalos (`regalos.html`)
+
+El contenido vive en `content.js` → `CONTENT.wishlist`. Para agregar o
+quitar una idea de regalo, sumá o borrá un objeto de `wishlist.items`:
+
+```js
+{ name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' }
+```
+
+`link` es opcional (por ejemplo a una tienda online); si lo dejás vacío, la
+tarjeta se muestra sin botón. También hay un bloque opcional para un
+regalo en efectivo (`wishlist.cashText` / `wishlist.cashAlias`) — si los
+dejás vacíos, esa tarjeta no se muestra.
+
+## Código QR para subir fotos (`fotos.html`)
+
+1. Guardá la imagen de tu código QR como **`qr-fotos.png`** en esta misma
+   carpeta (junto a `index.html`). Si tu archivo tiene otro nombre o
+   formato, cambiá el `src="qr-fotos.png"` en `fotos.html`.
+2. La página muestra esa imagen y, apenas carga, intenta **leer el QR en
+   el navegador** (con la librería [jsQR](https://github.com/cozmo/jsQR),
+   sin mandar la imagen a ningún servidor) para armar automáticamente un
+   botón "Ir al álbum →" con el link que encuentre adentro.
+3. Si ya sabés el link de destino (por ejemplo el álbum compartido de
+   Google Photos), es más simple y confiable pegarlo directamente en
+   `content.js` → `CONTENT.photos.fallbackUrl`: el botón lo usa tal cual y
+   ni intenta leer la imagen.
+4. La lectura automática necesita que el sitio esté servido por http/https
+   (GitHub Pages, Netlify, etc.) — algunos navegadores bloquean leer el
+   contenido de una imagen local cuando abrís el archivo con doble clic.
+   El QR se puede escanear igual con la cámara del celular en cualquier
+   caso; el botón es sólo una comodidad extra.
 
 ## Datos que se guardan por invitado
 

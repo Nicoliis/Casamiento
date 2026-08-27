@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de regalos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { position: relative; }
+
+  .back-link {
+    position: relative;
+    z-index: 1;
+    display: block;
+    text-align: center;
+    padding: 16px 12px 0;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--moss);
+    text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  header.hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    letter-spacing: 0.28em;
+    color: var(--moss);
+    margin: 0 0 10px;
+  }
+  h1.page-title {
+    font-family: var(--script);
+    font-weight: 400;
+    font-size: clamp(2.2rem, 8vw, 3.4rem);
+    color: var(--forest-deep);
+    margin: 0 0 16px;
+  }
+  .intro {
+    max-width: 480px;
+    margin: 0 auto;
+    color: var(--ink);
+    font-size: 1.08rem;
+  }
+
+  .section { position: relative; z-index: 1; padding: 20px 20px 56px; }
+
+  .gift-grid {
+    max-width: 900px;
+    margin: 30px auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 18px;
+  }
+  .gift-card { text-align: center; }
+  .gift-card .leaf-icon { width: 26px; height: 26px; color: var(--gold); margin-bottom: 8px; }
+  .gift-card h3 { font-size: 1.25rem; color: var(--forest); margin-bottom: 6px; }
+  .gift-card p { margin: 0; color: var(--ink); font-size: 0.95rem; }
+  .gift-card a.gift-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--forest);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .empty-note {
+    max-width: 420px;
+    margin: 30px auto 0;
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+  }
+
+  .cash-card {
+    max-width: 460px;
+    margin: 30px auto 0;
+    text-align: center;
+  }
+  .cash-card h3 { color: var(--forest); font-size: 1.2rem; margin-bottom: 8px; }
+  .cash-card .alias {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--sans);
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    background: var(--cream-deep);
+    border: 1px solid var(--sage-light);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px 50px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
+
+<a class="back-link" href="index.html" id="back-link"></a>
+
+<header class="hero">
+  <p class="kicker" id="txt-kicker"></p>
+  <h1 class="page-title" id="txt-title"></h1>
+  <p class="intro" id="txt-intro"></p>
+</header>
+
+<section class="section">
+  <div class="gift-grid" id="gift-grid"></div>
+  <p class="empty-note" id="empty-note" hidden></p>
+
+  <div class="card cash-card" id="cash-card" hidden>
+    <h3 id="cash-title"></h3>
+    <p id="cash-text"></p>
+    <span class="alias" id="cash-alias" hidden></span>
+  </div>
+</section>
+
+<footer>
+  <p id="txt-footer-signature"></p>
+</footer>
+
+<script src="config.js"></script>
+<script src="content.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const C = CONTENT.wishlist;
+  const $ = (id) => document.getElementById(id);
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function applyContent() {
+    document.title = C.title + ' — ' + CONTENT.siteTitle;
+    $('back-link').textContent = CONTENT.common.backToInvite;
+    $('txt-kicker').textContent = C.kicker;
+    $('txt-title').textContent = C.title;
+    $('txt-intro').textContent = C.intro;
+    $('txt-footer-signature').textContent = CONTENT.footer.signature;
+
+    const items = C.items || [];
+    if (items.length === 0) {
+      $('empty-note').hidden = false;
+      $('empty-note').textContent = C.emptyNote;
+    } else {
+      $('gift-grid').innerHTML = items.map((item) => {
+        const link = item.link
+          ? '<a class="gift-link" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">' + escapeHtml(C.linkText) + '</a>'
+          : '';
+        const note = item.note ? '<p>' + escapeHtml(item.note) + '</p>' : '';
+        return '<div class="card gift-card">' +
+          '<svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>' +
+          '<h3>' + escapeHtml(item.name) + '</h3>' + note + link +
+          '</div>';
+      }).join('');
+    }
+
+    if (C.cashText || C.cashAlias) {
+      $('cash-card').hidden = false;
+      $('cash-title').textContent = C.cashTitle;
+      $('cash-text').textContent = C.cashText;
+      if (C.cashAlias) {
+        $('cash-alias').hidden = false;
+        $('cash-alias').textContent = C.cashAlias;
+      }
+    }
+  }
+
+  function spawnLeaves() {
+    const host = $('leaves-bg');
+    const total = 9;
+    for (let i = 0; i < total; i++) {
+      const size = 14 + (i % 4) * 6;
+      const left = (i * 97) % 100;
+      const duration = 14 + (i % 5) * 4;
+      const delay = -(i * 3.4);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'currentColor');
+      svg.classList.add('leaf-float');
+      svg.style.left = left + '%';
+      svg.style.width = size + 'px';
+      svg.style.height = size + 'px';
+      svg.style.animationDuration = duration + 's';
+      svg.style.animationDelay = delay + 's';
+      svg.innerHTML = '<path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/>';
+      host.appendChild(svg);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyContent();
+    spawnLeaves();
+  });
+})();
+</script>
+</body>
+</html>

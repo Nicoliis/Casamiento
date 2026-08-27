@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subí tus fotos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { position: relative; }
+
+  .back-link {
+    position: relative;
+    z-index: 1;
+    display: block;
+    text-align: center;
+    padding: 16px 12px 0;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--moss);
+    text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  header.hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  .kicker {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    letter-spacing: 0.28em;
+    color: var(--moss);
+    margin: 0 0 10px;
+  }
+  h1.page-title {
+    font-family: var(--script);
+    font-weight: 400;
+    font-size: clamp(2.2rem, 8vw, 3.4rem);
+    color: var(--forest-deep);
+    margin: 0 0 16px;
+  }
+  .intro {
+    max-width: 440px;
+    margin: 0 auto;
+    color: var(--ink);
+    font-size: 1.08rem;
+  }
+
+  .section { position: relative; z-index: 1; padding: 20px 20px 56px; }
+
+  .qr-card {
+    max-width: 360px;
+    margin: 30px auto 0;
+    text-align: center;
+  }
+  .qr-frame {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    border: 1px solid var(--sage-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  #qr-image { width: 90%; height: 90%; object-fit: contain; }
+  #qr-missing { display: none; color: var(--muted); font-family: var(--sans); font-size: 0.85rem; padding: 0 16px; }
+
+  #decode-status {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--muted);
+    min-height: 1.2em;
+    margin-bottom: 10px;
+  }
+
+  #go-there-btn { width: 100%; justify-content: center; }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px 50px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
+
+<a class="back-link" href="index.html" id="back-link"></a>
+
+<header class="hero">
+  <p class="kicker" id="txt-kicker"></p>
+  <h1 class="page-title" id="txt-title"></h1>
+  <p class="intro" id="txt-intro"></p>
+</header>
+
+<section class="section">
+  <div class="card qr-card">
+    <div class="qr-frame">
+      <img id="qr-image" src="qr-fotos.png" alt="">
+      <p id="qr-missing"></p>
+    </div>
+    <p id="decode-status"></p>
+    <a class="btn btn-primary" id="go-there-btn" href="#" target="_blank" rel="noopener" hidden></a>
+  </div>
+</section>
+
+<footer>
+  <p id="txt-footer-signature"></p>
+</footer>
+
+<!-- Lector de códigos QR, 100% en el navegador (no manda la imagen a
+     ningún lado). https://github.com/cozmo/jsQR -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="config.js"></script>
+<script src="content.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const C = CONTENT.photos;
+  const $ = (id) => document.getElementById(id);
+
+  function applyContent() {
+    document.title = C.title + ' — ' + CONTENT.siteTitle;
+    $('back-link').textContent = CONTENT.common.backToInvite;
+    $('txt-kicker').textContent = C.kicker;
+    $('txt-title').textContent = C.title;
+    $('txt-intro').textContent = C.intro;
+    $('qr-image').alt = C.qrAlt;
+    $('qr-missing').textContent = C.qrMissingText;
+    $('go-there-btn').textContent = C.buttonText;
+    $('txt-footer-signature').textContent = CONTENT.footer.signature;
+  }
+
+  function spawnLeaves() {
+    const host = $('leaves-bg');
+    const total = 9;
+    for (let i = 0; i < total; i++) {
+      const size = 14 + (i % 4) * 6;
+      const left = (i * 97) % 100;
+      const duration = 14 + (i % 5) * 4;
+      const delay = -(i * 3.4);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'currentColor');
+      svg.classList.add('leaf-float');
+      svg.style.left = left + '%';
+      svg.style.width = size + 'px';
+      svg.style.height = size + 'px';
+      svg.style.animationDuration = duration + 's';
+      svg.style.animationDelay = delay + 's';
+      svg.innerHTML = '<path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/>';
+      host.appendChild(svg);
+    }
+  }
+
+  function showGoThereButton(url) {
+    const btn = $('go-there-btn');
+    btn.href = url;
+    btn.hidden = false;
+    $('decode-status').textContent = '';
+  }
+
+  // Dibuja la imagen del QR en un <canvas> oculto y usa jsQR para leer
+  // el texto/link codificado adentro, sin depender de ningún servidor.
+  function decodeQrFromImage(imgEl) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = (typeof jsQR === 'function') ? jsQR(imageData.data, imageData.width, imageData.height) : null;
+      return code ? code.data : null;
+    } catch (e) {
+      // Puede pasar si el navegador bloquea la lectura del canvas
+      // (por ejemplo al abrir el archivo con doble clic en vez de
+      // servirlo desde un hosting). El QR sigue siendo escaneable
+      // a mano igual.
+      return null;
+    }
+  }
+
+  function initQr() {
+    const img = $('qr-image');
+
+    // Si ya tenés el link a mano, lo dejamos fijo en content.js
+    // (photos.fallbackUrl) y ni intentamos leer la imagen.
+    if (C.fallbackUrl) {
+      showGoThereButton(C.fallbackUrl);
+      return;
+    }
+
+    function handleLoaded() {
+      $('decode-status').textContent = C.scanningText;
+      const url = decodeQrFromImage(img);
+      if (url) {
+        showGoThereButton(url);
+      } else {
+        $('decode-status').textContent = C.decodeErrorText;
+      }
+    }
+
+    function handleMissing() {
+      img.style.display = 'none';
+      $('qr-missing').style.display = 'block';
+    }
+
+    img.addEventListener('load', handleLoaded);
+    img.addEventListener('error', handleMissing);
+
+    // El navegador empieza a cargar la imagen apenas parsea el
+    // <img>, antes de que este script corra — así que puede que ya
+    // haya terminado (bien o mal) para cuando llegamos acá.
+    if (img.complete) {
+      if (img.naturalWidth > 0) handleLoaded();
+      else handleMissing();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyContent();
+    spawnLeaves();
+    initQr();
+  });
+})();
+</script>
+</body>
+</html>

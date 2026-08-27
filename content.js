@@ -13,11 +13,11 @@ const CONTENT = {
   },
 
   // Fecha y hora del evento, formato ISO. Se usa para la cuenta regresiva.
-  eventDateISO: '2026-11-14T18:00:00',
+  eventDateISO: '2026-12-12T15:00:00',
 
   hero: {
     kicker: 'NOS CASAMOS',
-    dateDisplay: '14 de noviembre de 2026',
+    dateDisplay: '12 de diciembre de 2026',
     welcome: 'Con todo nuestro cariño, queremos invitarte a celebrar el comienzo de esta nueva etapa junto a nosotros.',
     ctaButton: 'Confirmar asistencia'
   },
@@ -35,28 +35,34 @@ const CONTENT = {
     home: 'Inicio',
     ceremony: 'Ceremonia',
     reception: 'Recepción',
-    rsvp: 'Confirmar'
+    rsvp: 'Confirmar',
+    wishlist: 'Regalos',
+    photos: 'Fotos'
+  },
+
+  common: {
+    backToInvite: '← Volver a la invitación'
   },
 
   ceremony: {
     title: 'Ceremonia',
-    time: '18:00 hs',
-    place: 'Capilla Nuestra Señora del Bosque',
-    address: 'Camino de las Sierras 1234, Córdoba',
-    mapsUrl: 'https://maps.google.com/?q=Capilla+Nuestra+Se%C3%B1ora+del+Bosque'
+    time: '19:00 hs',
+    place: 'Parroquia Santa María de Guadalupe',
+    address: 'Molina campos 371, Moreno',
+    mapsUrl: 'https://maps.app.goo.gl/pxXjiWKZK1WZ4xS78'
   },
 
   reception: {
     title: 'Recepción',
     time: '20:00 hs',
-    place: 'Finca El Ombú',
-    address: 'Ruta Provincial 5, km 12, Córdoba',
-    mapsUrl: 'https://maps.google.com/?q=Finca+El+Ombu'
+    place: 'Salon Rosedal',
+    address: 'Av. Gral José María Zapiola 2722, Paso del rey',
+    mapsUrl: 'https://maps.app.goo.gl/B9g1z3bLf8cNNg5F7'
   },
 
   dressCode: {
     title: 'Código de vestimenta',
-    text: 'Elegante sport. Te pedimos evitar el blanco, ¡ese color nos lo dejamos para nosotros! 😉'
+    text: 'Elegante sport. Te pedimos evitar el blanco, ¡Ese color nos lo dejamos para nosotros! 😉'
   },
 
   identify: {
@@ -104,7 +110,45 @@ const CONTENT = {
 
   footer: {
     thanks: 'Gracias por ser parte de este día tan especial para nosotros.',
-    signature: 'Con amor, Ana & Tomás'
+    signature: 'Con amor, Silvina & Nicolás'
+  },
+
+  // ------------------------------------------------------------
+  // Página de regalos (regalos.html). Para agregar o quitar una
+  // idea de regalo, sumá o borrá un objeto de "items". Cada uno
+  // puede tener "link" vacío si no hay un lugar puntual para verlo.
+  // ------------------------------------------------------------
+  wishlist: {
+    title: 'Lista de regalos',
+    kicker: 'CON CARIÑO',
+    intro: 'Lo más importante para nosotros es compartir este día con vos. Si además querés hacernos un regalo, te dejamos algunas ideas.',
+    linkText: 'Ver →',
+    items: [
+		{ name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' },
+		{ name: 'Vajilla', note: 'Set de platos color blanco o crudo', link: 'https://ejemplo.com' },
+    ],
+    emptyNote: 'Todavía no cargamos ideas por acá — ¡pronto vamos a sumar algunas!',
+    cashTitle: 'Un gesto en efectivo',
+    cashText: '',
+    cashAlias: ''
+  },
+
+  // ------------------------------------------------------------
+  // Página para subir fotos durante la fiesta (fotos.html).
+  // "fallbackUrl": si ya tenés el link del álbum, pegalo acá y el
+  // botón "Ir al álbum" lo va a usar directamente. Si lo dejás
+  // vacío, la página intenta leer el código QR de la imagen sola.
+  // ------------------------------------------------------------
+  photos: {
+    title: 'Compartí tus fotos',
+    kicker: 'DURANTE LA FIESTA',
+    intro: 'Escaneá este código con la cámara de tu celular para subir las fotos y videos que saques en la fiesta.',
+    qrAlt: 'Código QR para subir fotos',
+    qrMissingText: 'Todavía no subimos el código QR. Guardalo como qr-fotos.png en esta misma carpeta.',
+    scanningText: 'Buscando el link dentro del código…',
+    decodeErrorText: 'No pudimos leer el link del código automáticamente. ¡Igual podés escanearlo con la cámara!',
+    buttonText: 'Ir al álbum →',
+    fallbackUrl: ''
   },
 
   admin: {
@@ -117,7 +161,12 @@ const CONTENT = {
     statPeople: 'Personas en total',
     statAttending: 'Asistirán',
     statNotAttending: 'No asistirán',
+    statPending: 'Grupos sin responder',
     dietBreakdownTitle: 'Restricciones alimentarias (de quienes asistirán)',
+    pendingTitle: 'Todavía no respondieron',
+    pendingEmpty: 'Todos los grupos precargados ya respondieron. 🎉',
+    pendingSetupHint: 'Para ver acá quién falta responder, precargá los grupos en guests.js.',
+    pendingPeopleLabel: 'sugeridos',
     tableGroup: 'Grupo',
     tableName: 'Nombre',
     tableAttending: 'Asiste',

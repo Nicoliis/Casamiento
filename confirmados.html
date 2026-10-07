@@ -374,7 +374,7 @@
     $('pending-list').addEventListener('click', async (e) => {
       const btn = e.target.closest('.copy-link-btn');
       if (!btn) return;
-      const link = new URL('?g=' + encodeURIComponent(btn.dataset.slug), window.location.href).href;
+      const link = new URL('index.html?g=' + encodeURIComponent(btn.dataset.slug), window.location.href).href;
       try {
         await navigator.clipboard.writeText(link);
       } catch (err) {

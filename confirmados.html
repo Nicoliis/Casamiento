@@ -104,6 +104,7 @@
       <div class="card stat"><strong id="stat-attending">0</strong><span id="lbl-stat-attending"></span></div>
       <div class="card stat"><strong id="stat-not-attending">0</strong><span id="lbl-stat-not-attending"></span></div>
       <div class="card stat" id="stat-pending-card" hidden><strong id="stat-pending">0</strong><span id="lbl-stat-pending"></span></div>
+      <div class="card stat" id="stat-pending-people-card" hidden><strong id="stat-pending-people">0</strong><span id="lbl-stat-pending-people"></span></div>
     </div>
 
     <h2 id="pending-title"></h2>
@@ -144,6 +145,7 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
+<script src="drivestore.js"></script>
 <script src="guests.js"></script>
 <script>
 (function () {
@@ -155,6 +157,7 @@
 
   let latestRsvps = null;
   let sessionPassword = null;
+  const drivestore = new DriveStore(DRIVESTORE_CONFIG);
 
   function applyStaticText() {
     $('back-link').textContent = CONTENT.common.backToInvite;
@@ -167,6 +170,7 @@
     $('lbl-stat-attending').textContent = C.statAttending;
     $('lbl-stat-not-attending').textContent = C.statNotAttending;
     $('lbl-stat-pending').textContent = C.statPending;
+    $('lbl-stat-pending-people').textContent = C.statPendingPeople;
     $('pending-title').textContent = C.pendingTitle;
     $('pending-empty').textContent = C.pendingEmpty;
     $('pending-hint').textContent = C.pendingSetupHint;
@@ -256,6 +260,7 @@
     const hasGuestList = typeof GUEST_LIST !== 'undefined' && GUEST_LIST.length > 0;
     $('pending-hint').hidden = hasGuestList;
     $('stat-pending-card').hidden = !hasGuestList;
+    $('stat-pending-people-card').hidden = !hasGuestList;
     if (!hasGuestList) {
       $('pending-list').innerHTML = '';
       $('pending-empty').hidden = true;
@@ -264,6 +269,7 @@
 
     const pending = GUEST_LIST.filter((g) => !rsvps[getGuestSlug(g)]);
     $('stat-pending').textContent = pending.length;
+    $('stat-pending-people').textContent = pending.reduce((n, g) => n + (g.people ? g.people.length : 0), 0);
 
     $('pending-list').innerHTML = pending
       .map((g) => {
@@ -282,13 +288,22 @@
   }
 
 
+
+  // Junta todos los archivos "rsvp-<slug>" de DriveStore en un solo
+  // objeto { slug: registro }. La contraseña sólo se chequea acá, en el
+  // navegador (no es seguridad real: ver config.js).
   async function fetchSummary(password) {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'summary', key: password })
-    });
-    return res.json();
+    if (password !== ADMIN_PASSWORD) return { ok: false, error: 'unauthorized' };
+    try {
+      const files = await drivestore.listFiles();
+      const names = files.map((f) => f.name).filter((n) => n.indexOf('rsvp-') === 0);
+      const records = await Promise.all(names.map((n) => drivestore.getFile(n)));
+      const rsvps = {};
+      records.forEach((r) => { if (r && r.guest) rsvps[r.guest] = r; });
+      return { ok: true, rsvps: rsvps };
+    } catch (err) {
+      return { ok: false, error: String(err) };
+    }
   }
 
   async function tryEnter(password) {

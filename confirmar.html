@@ -119,7 +119,7 @@
 <div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
 
 <div id="setup-warning">
-  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y pegá la URL de tu Web App de Google Apps Script.
+  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y revisá la configuración de DriveStore.
 </div>
 
 <nav class="site-nav">
@@ -182,6 +182,7 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
+<script src="drivestore.js"></script>
 <script src="guests.js"></script>
 <script>
 (function () {
@@ -189,6 +190,7 @@
 
   const C = CONTENT;
   const $ = (id) => document.getElementById(id);
+  const drivestore = new DriveStore(DRIVESTORE_CONFIG);
 
   const DIET_KEYS = ['vegan', 'vegetarian', 'celiac', 'lactose', 'hypertensive', 'other'];
 
@@ -270,7 +272,7 @@
   }
 
   function isConfigured() {
-    return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+    return drivestore.isConfigured();
   }
 
   // ---------------------------------------------------------
@@ -461,18 +463,14 @@
   // Backend
   // ---------------------------------------------------------
   async function fetchGuest(guestId) {
-    const url = APPS_SCRIPT_URL + '?action=get&guest=' + encodeURIComponent(guestId);
-    const res = await fetch(url);
-    return res.json();
+    const data = await drivestore.getFile('rsvp-' + guestId);
+    return { ok: true, exists: !!data, data: data };
   }
 
   async function saveGuest(payload) {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    return res.json();
+    const record = Object.assign({}, payload, { updatedAt: new Date().toISOString() });
+    await drivestore.pushFile('rsvp-' + payload.guest, record);
+    return { ok: true, data: record };
   }
 
   // ---------------------------------------------------------
@@ -518,34 +516,39 @@
     try {
       result = await fetchGuest(guestId);
     } catch (err) {
-      $('rsvp-loading').textContent = C.rsvp.errorMessage;
+      console.error(err);
+      $('rsvp-loading').textContent = C.rsvp.errorMessage + ' (' + (err && err.message ? err.message : err) + ')';
       return;
     }
 
     $('confirming-label').textContent = currentLabel;
 
-    if (result.ok && result.exists && result.data) {
-      // Ya había una confirmación guardada para este grupo: la editamos.
-      currentLabel = result.data.label || currentLabel;
+    const saved = (result.ok && result.exists && result.data) ? result.data : null;
+    const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
+
+    if (preset && preset.people && preset.people.length) {
+      // Grupo de la lista de invitados (guests.js): los nombres salen
+      // SIEMPRE de ahí, así nadie puede cambiarlos ni quitar a alguien.
+      // De lo guardado sólo se toma asistencia/restricciones, por posición.
+      currentLabel = preset.label || currentLabel;
       $('confirming-label').textContent = currentLabel;
-      result.data.people.forEach((p) => addPersonRow(p, true));
-      $('comments').value = result.data.comments || '';
-      $('submit-btn').textContent = C.rsvp.update;
+      const savedPeople = (saved && saved.people) || [];
+      preset.people.forEach((name, i) => {
+        const prev = savedPeople[i] || {};
+        const isPlaceholder = /^acompa(ñ|n)ante$/i.test(name);
+        addPersonRow(Object.assign({}, prev, { name: (isPlaceholder && prev.name) ? prev.name : name }), true);
+      });
+    } else if (saved) {
+      // Grupo que no está en la lista, pero ya había guardado algo.
+      currentLabel = saved.label || currentLabel;
+      $('confirming-label').textContent = currentLabel;
+      saved.people.forEach((p) => addPersonRow(p));
     } else {
-      // Sin confirmación previa: si el grupo está precargado en
-      // guests.js, arrancamos con esos nombres sugeridos (todavía
-      // sin marcar asistencia) en vez de una fila en blanco.
-      const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
-      if (preset) {
-        currentLabel = preset.label || currentLabel;
-        $('confirming-label').textContent = currentLabel;
-        const names = (preset.people && preset.people.length) ? preset.people : [''];
-        names.forEach((name) => addPersonRow({ name: name }, !!preset.people.length));
-      } else {
-        addPersonRow({});
-      }
-      $('submit-btn').textContent = C.rsvp.submit;
+      addPersonRow({});
     }
+    $('comments').value = saved ? (saved.comments || '') : '';
+    $('submit-btn').textContent = saved ? C.rsvp.update : C.rsvp.submit;
+
 
 
     $('rsvp-loading').hidden = true;
@@ -573,7 +576,8 @@
     $('identify-continue-btn').addEventListener('click', () => {
       const raw = $('identify-input').value.trim();
       if (!raw) return;
-      const guestId = slugify(raw);
+      const match = GUEST_LIST.find((g) => g.label.toLowerCase() === raw.toLowerCase());
+      const guestId = match ? getGuestSlug(match) : slugify(raw);
       if (!guestId) return;
       loadGuest(guestId, raw);
     });
@@ -620,7 +624,8 @@
         showStatus($('rsvp-status'), C.rsvp.savedMessage, 'ok');
         submitBtn.textContent = C.rsvp.update;
       } catch (err) {
-        showStatus($('rsvp-status'), C.rsvp.errorMessage, 'error');
+        console.error(err);
+        showStatus($('rsvp-status'), C.rsvp.errorMessage + ' (' + (err && err.message ? err.message : err) + ')', 'error');
       } finally {
         submitBtn.disabled = false;
       }

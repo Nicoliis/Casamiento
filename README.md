@@ -3,15 +3,15 @@
 Un sitio de invitación en verde/naturaleza, en español, con confirmación de
 asistencia (RSVP) por invitado y un panel privado que agrega todas las
 respuestas. Todo se guarda en un archivo JSON dentro de tu carpeta de Google
-Drive, vía DriveStore (un Google Apps Script que corre con tu cuenta) — los
+Drive, escrito por un Google Apps Script que corre con tu cuenta — los
 invitados no necesitan iniciar sesión en Google.
 
 ## Archivos
 
 | Archivo | Qué es |
 |---|---|
-| `drivestore.js` | Cliente de DriveStore: guarda/lee los archivos de la app en Drive. |
-| `config.js` | Configuración de DriveStore (url, appid, apppass) y contraseña del panel. |
+| `Code.gs` (GoogleScript/) | Backend (Google Apps Script). Lee/escribe `rsvps.json` en tu carpeta de Drive. |
+| `config.js` | Un solo lugar con la URL de tu Web App de Apps Script. |
 | `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, etc. Editá solo este archivo para cambiar palabras. |
 | `guests.js` | Lista opcional de familias/grupos invitados, para precargar nombres y ver quién no respondió. |
 | `theme.css` | Paleta de colores y estilos compartidos (verde/naturaleza) — incluye el menú de navegación, compartido por todas las páginas. |
@@ -58,30 +58,27 @@ adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
 
 ## Setup
 
-### 1. Backend (DriveStore)
+### 1. Backend (Apps Script)
 
-El sitio guarda todo con **DriveStore** (`drivestore.js`), un cliente que
-usa un backend de Google Apps Script compartido entre varias apps. Cada
-grupo de invitados se guarda como un archivo `rsvp-<slug>` dentro de la
-carpeta de esta app en Drive.
+> ⚠️ **`GoogleScript/Code.gs` tiene `FOLDER_ID` y `ADMIN_PASSWORD` en
+> placeholder a propósito** (no guardamos tus valores reales acá). Cada
+> vez que pegás este archivo en script.google.com, **pisás** lo que
+> tenías puesto ahí antes — tenés que volver a escribir tus valores
+> reales todas las veces. Si te olvidás, el backend entero deja de
+> funcionar (RSVP y panel de admin), aunque el sitio se vea normal.
 
-1. El backend de DriveStore tiene que estar desplegado como Web App.
-2. En el `apps.json` de su carpeta de Drive tiene que existir la entrada
-   `INVITACIONES-CASAMIENTO` con su `pass`.
-3. En `config.js` completá `DRIVESTORE_CONFIG`: `url` (la URL `/exec`),
-   `appid` y `apppass` (los mismos de `apps.json`), y poné tu
-   `ADMIN_PASSWORD` para el panel.
+1. Abrí tu proyecto en [script.google.com](https://script.google.com).
+2. Reemplazá todo el contenido por el nuevo `Code.gs`.
+3. Poné tu `FOLDER_ID` (el ID de la carpeta de Drive) y tu `ADMIN_PASSWORD`.
+4. **Deploy → Manage deployments → ✏️ → New version → Deploy.** Mantiene la
+   misma URL `/exec` que va en `config.js` (`APPS_SCRIPT_URL`).
+5. Probá `TU_URL/exec?action=get&guest=prueba`: tiene que devolver `{"ok":true,...}`.
 
-> ⚠️ `apppass` queda visible en el código público del sitio, así que
-> cualquiera que lo lea puede leer o pisar los archivos de esta app.
-> Del mismo modo, `ADMIN_PASSWORD` se chequea en el navegador: sólo
-> oculta el panel, no lo protege de verdad.
-
-**Nombres bloqueados:** la lista de invitados vive en `guests.js`
-(`GUEST_LIST`). Los nombres de cada grupo salen siempre de ahí; lo que se
-guarda en DriveStore es sólo asistencia, restricciones y comentarios. Por
-eso nadie puede editar, agregar ni quitar nombres (salvo completar un
-"Acompañante" genérico).
+**Grupos y respuestas:** viven en `rsvps.json` en esa carpeta de Drive. Cada
+grupo ya trae sus nombres; la página sólo agrega asistencia, restricciones
+y comentarios. Los nombres quedan bloqueados (no se editan, agregan ni
+quitan; sólo se completa un "Acompañante" genérico) y el backend lo hace
+cumplir. Para cambiar nombres, editá `rsvps.json` en Drive.
 
 ### 2. Contenido del sitio
 
@@ -102,10 +99,10 @@ No hace falta tocar ningún `.html` para estos cambios.
 Abrí `index.html` en el navegador (doble clic, o subilo a GitHub Pages /
 Netlify / cualquier hosting estático), andá a "Confirmar" y probá el flujo
 completo: escribí un nombre, confirmá una persona, y verificá que aparezca
-en Drive como `rsvp-<slug>`.
+en `rsvps.json` en Drive.
 
 Para ver las respuestas agregadas, abrí `confirmados.html` e ingresá la
-`ADMIN_PASSWORD` de `config.js`.
+contraseña que pusiste en `ADMIN_PASSWORD`.
 
 ## Precargar grupos de invitados (`guests.js`)
 

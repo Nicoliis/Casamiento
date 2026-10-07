@@ -119,7 +119,7 @@
 <div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
 
 <div id="setup-warning">
-  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y revisá la configuración de DriveStore.
+  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y pegá la URL de tu Web App de Google Apps Script.
 </div>
 
 <nav class="site-nav">
@@ -182,7 +182,6 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
-<script src="drivestore.js"></script>
 <script src="guests.js"></script>
 <script>
 (function () {
@@ -190,7 +189,6 @@
 
   const C = CONTENT;
   const $ = (id) => document.getElementById(id);
-  const drivestore = new DriveStore(DRIVESTORE_CONFIG);
 
   const DIET_KEYS = ['vegan', 'vegetarian', 'celiac', 'lactose', 'hypertensive', 'other'];
 
@@ -272,7 +270,7 @@
   }
 
   function isConfigured() {
-    return drivestore.isConfigured();
+    return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
   }
 
   // ---------------------------------------------------------
@@ -463,7 +461,7 @@
   // Backend
   // ---------------------------------------------------------
   // Apps Script a veces contesta con una página HTML de error (cuota,
-  // sobrecarga, reinicio) en vez de JSON. Es pasajero: reintentamos.
+  // sobrecarga) en vez de JSON. Es pasajero: reintentamos.
   async function withRetry(fn) {
     let lastErr;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -479,16 +477,20 @@
   }
 
   async function fetchGuest(guestId) {
-    const data = await withRetry(() => drivestore.getFile('rsvp-' + guestId));
-    return { ok: true, exists: !!data, data: data };
+    const url = APPS_SCRIPT_URL + '?action=get&guest=' + encodeURIComponent(guestId);
+    return withRetry(async () => (await fetch(url)).json());
   }
 
   async function saveGuest(payload) {
-    const record = Object.assign({}, payload, { updatedAt: new Date().toISOString() });
-    await withRetry(() => drivestore.pushFile('rsvp-' + payload.guest, record));
-    return { ok: true, data: record };
+    return withRetry(async () => {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    });
   }
-
   // ---------------------------------------------------------
   // Flujo de identificación + RSVP
   // ---------------------------------------------------------
@@ -539,7 +541,9 @@
 
     $('confirming-label').textContent = currentLabel;
 
-    const saved = (result.ok && result.exists && result.data) ? result.data : null;
+    const record = (result.ok && result.exists && result.data) ? result.data : null;
+    const answered = !!record && record.people.some((p) => typeof p.attending === 'boolean');
+    const saved = record;
     const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
 
     if (preset && preset.people && preset.people.length) {
@@ -558,12 +562,13 @@
       // Grupo que no está en la lista, pero ya había guardado algo.
       currentLabel = saved.label || currentLabel;
       $('confirming-label').textContent = currentLabel;
-      saved.people.forEach((p) => addPersonRow(p));
+      // Registro que ya existe en el backend: nombres fijos.
+      saved.people.forEach((p) => addPersonRow(p, true));
     } else {
       addPersonRow({});
     }
     $('comments').value = saved ? (saved.comments || '') : '';
-    $('submit-btn').textContent = saved ? C.rsvp.update : C.rsvp.submit;
+    $('submit-btn').textContent = answered ? C.rsvp.update : C.rsvp.submit;
 
 
 

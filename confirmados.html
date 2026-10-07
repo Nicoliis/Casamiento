@@ -148,7 +148,6 @@
 
 <script src="config.js"></script>
 <script src="content.js"></script>
-<script src="drivestore.js"></script>
 <script src="guests.js"></script>
 <script>
 (function () {
@@ -160,7 +159,6 @@
 
   let latestRsvps = null;
   let sessionPassword = null;
-  const drivestore = new DriveStore(DRIVESTORE_CONFIG);
 
   function applyStaticText() {
     $('back-link').textContent = CONTENT.common.backToInvite;
@@ -208,7 +206,7 @@
 
   function render(rsvps) {
     latestRsvps = rsvps;
-    const parties = Object.values(rsvps || {});
+    const parties = Object.values(rsvps || {}).filter(hasAnswered);
     const allPeople = parties.flatMap((party) => party.people.map((p) => ({ ...p, group: party.label || party.guest, updatedAt: party.updatedAt })));
 
     const attending = allPeople.filter((p) => p.attending);
@@ -259,27 +257,36 @@
   }
 
 
+  // ¿Este grupo ya respondió? (alguna persona tiene sí/no marcado)
+  function hasAnswered(rec) {
+    return !!rec && Array.isArray(rec.people) &&
+      rec.people.some((p) => typeof p.attending === 'boolean');
+  }
+
+  // Los grupos "precargados" son los registros de rsvps.json en Drive
+  // que todavía no tienen ninguna respuesta.
   function renderPending(rsvps) {
-    const hasGuestList = typeof GUEST_LIST !== 'undefined' && GUEST_LIST.length > 0;
-    $('pending-hint').hidden = hasGuestList;
-    $('stat-pending-card').hidden = !hasGuestList;
-    $('stat-pending-people-card').hidden = !hasGuestList;
-    if (!hasGuestList) {
+    const all = Object.values(rsvps || {});
+    const hasGroups = all.length > 0;
+    $('pending-hint').hidden = hasGroups;
+    $('stat-pending-card').hidden = !hasGroups;
+    $('stat-pending-people-card').hidden = !hasGroups;
+    if (!hasGroups) {
       $('pending-list').innerHTML = '';
       $('pending-empty').hidden = true;
       return;
     }
 
-    const pending = GUEST_LIST.filter((g) => !rsvps[getGuestSlug(g)]);
+    const pending = all.filter((r) => !hasAnswered(r));
     $('stat-pending').textContent = pending.length;
-    $('stat-pending-people').textContent = pending.reduce((n, g) => n + (g.people ? g.people.length : 0), 0);
+    $('stat-pending-people').textContent = pending.reduce((n, r) => n + (r.people ? r.people.length : 0), 0);
 
     $('pending-list').innerHTML = pending
-      .map((g) => {
-        const names = (g.people && g.people.length) ? escapeHtml(g.people.join(', ')) : '';
-        const namesLine = names ? '<span>' + names + ' (' + escapeHtml(CONTENT.admin.pendingPeopleLabel) + ')</span>' : '';
-        return '<li><div><strong>' + escapeHtml(g.label) + '</strong>' + namesLine + '</div>' +
-          '<button type="button" class="copy-link-btn" data-slug="' + escapeHtml(getGuestSlug(g)) + '">' + escapeHtml(CONTENT.admin.copyLink) + '</button></li>';
+      .map((r) => {
+        const names = (r.people && r.people.length) ? escapeHtml(r.people.map((p) => p.name).join(', ')) : '';
+        const namesLine = names ? '<span>' + names + '</span>' : '';
+        return '<li><div><strong>' + escapeHtml(r.label || r.guest) + '</strong>' + namesLine + '</div>' +
+          '<button type="button" class="copy-link-btn" data-slug="' + escapeHtml(r.guest) + '">' + escapeHtml(CONTENT.admin.copyLink) + '</button></li>';
       })
       .join('');
     $('pending-empty').hidden = pending.length > 0;
@@ -293,21 +300,13 @@
 
 
 
-  // Junta todos los archivos "rsvp-<slug>" de DriveStore en un solo
-  // objeto { slug: registro }. La contraseña sólo se chequea acá, en el
-  // navegador (no es seguridad real: ver config.js).
   async function fetchSummary(password) {
-    if (password !== ADMIN_PASSWORD) return { ok: false, error: 'unauthorized' };
-    try {
-      const files = await drivestore.listFiles();
-      const names = files.map((f) => f.name).filter((n) => n.indexOf('rsvp-') === 0);
-      const records = await Promise.all(names.map((n) => drivestore.getFile(n)));
-      const rsvps = {};
-      records.forEach((r) => { if (r && r.guest) rsvps[r.guest] = r; });
-      return { ok: true, rsvps: rsvps };
-    } catch (err) {
-      return { ok: false, error: String(err) };
-    }
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'summary', key: password })
+    });
+    return res.json();
   }
 
   async function tryEnter(password) {
@@ -333,7 +332,7 @@
   function exportCsv() {
     if (!latestRsvps) return;
     const rows = [['Grupo', 'Nombre', 'Asiste', 'Restricciones', 'Comentarios', 'Actualizado']];
-    Object.values(latestRsvps).forEach((party) => {
+    Object.values(latestRsvps).filter(hasAnswered).forEach((party) => {
       party.people.forEach((p) => {
         rows.push([
           party.label || party.guest,

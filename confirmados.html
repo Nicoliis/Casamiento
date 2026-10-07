@@ -82,10 +82,6 @@
 
   .empty { text-align: center; color: var(--muted); padding: 30px 0; font-family: var(--sans); }
 
-  tr.gift-conflict td { background: #fff3ea; }
-  td.gift-unclaimed { color: var(--muted); }
-  td.gift-claimed { color: var(--ok); }
-  td.gift-conflict-cell { color: var(--error); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -143,19 +139,6 @@
     <ul id="comments-list"></ul>
     <p class="empty" id="comments-empty" hidden></p>
 
-    <h2 id="gifts-title"></h2>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th id="th-gift"></th>
-            <th id="th-gift-claimed-by"></th>
-          </tr>
-        </thead>
-        <tbody id="gifts-tbody"></tbody>
-      </table>
-      <p class="empty" id="gifts-empty" hidden></p>
-    </div>
   </div>
 </div>
 
@@ -198,10 +181,6 @@
     $('comments-title').textContent = C.commentsTitle;
     $('table-empty').textContent = C.empty;
     $('comments-empty').textContent = C.noComments;
-    $('gifts-title').textContent = C.giftsTitle;
-    $('th-gift').textContent = C.tableGift;
-    $('th-gift-claimed-by').textContent = C.giftsClaimedBy;
-    $('gifts-empty').textContent = C.giftsEmpty;
   }
 
   function dietLabel(person) {
@@ -220,7 +199,7 @@
     }
   }
 
-  function render(rsvps, claims) {
+  function render(rsvps) {
     latestRsvps = rsvps;
     const parties = Object.values(rsvps || {});
     const allPeople = parties.flatMap((party) => party.people.map((p) => ({ ...p, group: party.label || party.guest, updatedAt: party.updatedAt })));
@@ -270,36 +249,8 @@
       .join('');
     $('comments-empty').hidden = withComments.length > 0;
 
-    renderGifts(claims || {});
   }
 
-  function renderGifts(claims) {
-    const items = (CONTENT.wishlist && CONTENT.wishlist.items) || [];
-    const tbody = $('gifts-tbody');
-    tbody.innerHTML = '';
-    $('gifts-empty').hidden = items.length > 0;
-    if (items.length === 0) return;
-
-    items.forEach((item) => {
-      const key = item.key || (typeof slugifyGuestLabel === 'function' ? slugifyGuestLabel(item.name) : item.name);
-      const claimants = Array.isArray(claims[key]) ? claims[key] : [];
-      const tr = document.createElement('tr');
-
-      let statusHtml;
-      if (claimants.length === 0) {
-        statusHtml = '<td class="gift-unclaimed">' + escapeHtml(C.giftsUnclaimed) + '</td>';
-      } else if (claimants.length === 1) {
-        statusHtml = '<td class="gift-claimed">' + escapeHtml(claimants[0].label) + '</td>';
-      } else {
-        tr.className = 'gift-conflict';
-        const names = claimants.map((c) => c.label).join(', ');
-        statusHtml = '<td class="gift-conflict-cell">' + escapeHtml(names) + ' — ' + escapeHtml(C.giftsConflict) + '</td>';
-      }
-
-      tr.innerHTML = '<td>' + escapeHtml(item.name) + '</td>' + statusHtml;
-      tbody.appendChild(tr);
-    });
-  }
 
   function renderPending(rsvps) {
     const hasGuestList = typeof GUEST_LIST !== 'undefined' && GUEST_LIST.length > 0;
@@ -330,6 +281,7 @@
     return div.innerHTML;
   }
 
+
   async function fetchSummary(password) {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -350,7 +302,7 @@
     sessionStorage.setItem('weddingAdminPass', password);
     $('gate').hidden = true;
     $('panel').hidden = false;
-    render(result.rsvps, result.claims);
+    render(result.rsvps);
   }
 
   function csvEscape(value) {
@@ -396,7 +348,7 @@
     $('refresh-btn').addEventListener('click', async () => {
       if (!sessionPassword) return;
       const result = await fetchSummary(sessionPassword);
-      if (result.ok) render(result.rsvps, result.claims);
+      if (result.ok) render(result.rsvps);
     });
     $('export-csv-btn').addEventListener('click', exportCsv);
 

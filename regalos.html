@@ -11,19 +11,6 @@
 <style>
   body { position: relative; }
 
-  #setup-warning {
-    position: relative;
-    z-index: 2;
-    background: #fff3ea;
-    border-bottom: 1px solid var(--gold);
-    color: #6b4a2c;
-    padding: 12px 20px;
-    font-family: var(--sans);
-    font-size: 0.85rem;
-    text-align: center;
-    display: none;
-  }
-
   header.hero {
     position: relative;
     z-index: 1;
@@ -53,22 +40,6 @@
 
   .section { position: relative; z-index: 1; padding: 20px 20px 56px; }
 
-  /* ---------- Identidad de grupo ---------- */
-  .identify-card { max-width: 480px; margin: 24px auto 0; }
-  .identify-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .identify-row input { flex: 1; min-width: 180px; }
-  .identified-bar {
-    font-family: var(--sans);
-    font-size: 0.85rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .identified-bar strong { color: var(--forest); font-family: var(--serif); font-size: 1.05rem; }
-
   .gift-grid {
     max-width: 900px;
     margin: 30px auto 0;
@@ -89,31 +60,13 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
-  .gift-status {
-    font-family: var(--sans);
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    margin: 12px 0 0;
-  }
-  .gift-status.unclaimed { color: var(--muted); }
-  .gift-status.claimed { color: var(--error); }
-  .gift-status.mine { color: var(--ok); font-weight: 600; }
-  .gift-card .claim-btn { margin-top: 10px; width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 16px; }
 
-  .empty-note {
-    max-width: 420px;
-    margin: 30px auto 0;
-    text-align: center;
-    color: var(--muted);
-    font-family: var(--sans);
-    font-size: 0.9rem;
-  }
+  .instructions { max-width: 560px; margin: 30px auto 0; }
+  .instructions h2 { color: var(--forest); font-size: 1.3rem; margin-bottom: 10px; text-align: center; }
+  .instructions ol { margin: 0; padding-left: 1.3em; color: var(--ink); }
+  .instructions li { margin-bottom: 8px; }
 
-  .cash-card {
-    max-width: 460px;
-    margin: 30px auto 0;
-    text-align: center;
-  }
+  .cash-card { max-width: 460px; margin: 30px auto 0; text-align: center; }
   .cash-card h3 { color: var(--forest); font-size: 1.2rem; margin-bottom: 8px; }
   .cash-card .alias {
     display: inline-block;
@@ -142,420 +95,82 @@
 
 <div class="leaves-bg" id="leaves-bg" aria-hidden="true"></div>
 
-<div id="setup-warning">
-  ⚠️ Esta página aún no está conectada. Abrí <code>config.js</code> y pegá la URL de tu Web App de Google Apps Script.
-</div>
-
 <nav class="site-nav">
-  <a href="index.html#inicio" id="nav-home"></a>
-  <a href="index.html#ceremonia" id="nav-ceremony"></a>
-  <a href="index.html#recepcion" id="nav-reception"></a>
-  <a href="confirmar.html" id="nav-rsvp"></a>
-  <a href="regalos.html" id="nav-wishlist" class="active"></a>
-  <a href="fotos.html" id="nav-photos"></a>
+  <a href="index.html#inicio">Inicio</a>
+  <a href="index.html#ceremonia">Ceremonia</a>
+  <a href="index.html#recepcion">Recepción</a>
+  <a href="confirmar.html">Confirmar</a>
+  <a href="regalos.html" class="active">Regalos</a>
+  <a href="fotos.html">Fotos</a>
 </nav>
 
 <header class="hero">
-  <p class="kicker" id="txt-kicker"></p>
-  <h1 class="page-title" id="txt-title"></h1>
-  <p class="intro" id="txt-intro"></p>
+  <p class="kicker">CON CARIÑO</p>
+  <h1 class="page-title">Lista de regalos</h1>
+  <h2 class="intro">Lo más importante para nosotros es compartir este día con vos. Si además querés hacernos un regalo, te dejamos algunas ideas.</h2>
 </header>
 
 <section class="section">
 
-  <div class="card identify-card" id="identify-card">
-    <div id="identify-step">
-      <label for="identify-input" id="lbl-identify-title"></label>
-      <p class="status-msg muted" id="txt-identify-text" style="margin-top:-2px;margin-bottom:12px;"></p>
-      <div class="identify-row">
-        <input type="text" id="identify-input" maxlength="150" list="guest-suggestions" autocomplete="off">
-        <datalist id="guest-suggestions"></datalist>
-        <button type="button" class="btn btn-primary" id="identify-continue-btn"></button>
-      </div>
+  <!-- Para agregar o quitar un regalo, copiá o borrá un bloque <div class="card gift-card">. -->
+  <!-- <div class="gift-grid">
+
+    <div class="card gift-card">
+      <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>
+      <h3>Juego de sábanas</h3>
+      <p>Talle queen, blancas o lino natural</p>
     </div>
-    <div class="identified-bar" id="identified-bar" hidden>
-      <span><span id="txt-reserving-as"></span> <strong id="identified-label"></strong></span>
-      <button type="button" class="btn-text" id="change-identity-btn"></button>
+
+    <div class="card gift-card">
+      <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>
+      <h3>Vajilla</h3>
+      <p>Set de platos color blanco o crudo</p>
+      <a class="gift-link" href="https://ejemplo.com" target="_blank" rel="noopener">Ver →</a>
     </div>
+
+  </div> -->
+
+  <div class="card instructions">
+    <!-- <h2>Cómo regalarnos</h2> -->
+    <ol>
+      <li>Elegí la idea que más te guste. <b>La intencion es lo que cuenta.</b></li>
+      <li>Compralo vos o coordiná con otras personas para hacerla entre varios.</li>
+      <li>Llevalo el día de la fiesta o avisanos para que coordinemos la entrega.</li>
+    </ol>
   </div>
 
-  <p class="status-msg muted" id="claims-status" style="text-align:center;margin-top:16px;"></p>
-
-  <div class="gift-grid" id="gift-grid"></div>
-  <p class="empty-note" id="empty-note" hidden></p>
-
-  <div class="card cash-card" id="cash-card" hidden>
-    <h3 id="cash-title"></h3>
-    <p id="cash-text"></p>
-    <span class="alias" id="cash-alias" hidden></span>
+  <!-- Regalo en efectivo: completá el alias o borrá este bloque entero. -->
+  <div class="card cash-card">
+    <h3>Un gesto en efectivo</h3>
+    <p>Si preferís colaborar con nuestra luna de miel, también podés hacerlo con una transferencia.</p>
+    <span class="alias">nico.sil.z.mp</span>
   </div>
 </section>
 
 <footer>
-  <p id="txt-footer-signature"></p>
+  <p>Con amor, Silvina &amp; Nicolás</p>
 </footer>
 
-<script src="config.js"></script>
-<script src="content.js"></script>
 <script src="guests.js"></script>
 <script>
-(function () {
-  'use strict';
-
-  const C = CONTENT.wishlist;
-  const CC = C.claim;
-  const $ = (id) => document.getElementById(id);
-
-  let currentGuestId = null;
-  let currentLabel = null;
-  let claims = {};
-  let claimsLoaded = false;
-  let busyItem = null; // item key currently being saved, to disable its button
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-  }
-
-  function fillTemplate(str, label) {
-    return String(str || '').replace('{label}', label);
-  }
-
-  function isConfigured() {
-    return typeof APPS_SCRIPT_URL === 'string' && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
-  }
-
-  function itemKey(item) {
-    return item.key || slugifyGuestLabel(item.name);
-  }
-
-  // ---------------------------------------------------------
-  // Texto estático + hojas decorativas
-  // ---------------------------------------------------------
-  function applyStaticContent() {
-    document.title = C.title + ' — ' + CONTENT.siteTitle;
-    $('nav-home').textContent = CONTENT.nav.home;
-    $('nav-ceremony').textContent = CONTENT.nav.ceremony;
-    $('nav-reception').textContent = CONTENT.nav.reception;
-    $('nav-rsvp').textContent = CONTENT.nav.rsvp;
-    $('nav-wishlist').textContent = CONTENT.nav.wishlist;
-    $('nav-photos').textContent = CONTENT.nav.photos;
-    $('txt-kicker').textContent = C.kicker;
-    $('txt-title').textContent = C.title;
-    $('txt-intro').textContent = C.intro;
-    $('txt-footer-signature').textContent = CONTENT.footer.signature;
-
-    $('lbl-identify-title').textContent = CC.identifyTitle;
-    $('txt-identify-text').textContent = CC.identifyText;
-    $('identify-input').placeholder = CC.placeholder;
-    $('identify-continue-btn').textContent = CC.continue;
-    $('txt-reserving-as').textContent = CC.reservingAs;
-    $('change-identity-btn').textContent = CC.changeIdentity;
-
-    if (C.cashText || C.cashAlias) {
-      $('cash-card').hidden = false;
-      $('cash-title').textContent = C.cashTitle;
-      $('cash-text').textContent = C.cashText;
-      if (C.cashAlias) {
-        $('cash-alias').hidden = false;
-        $('cash-alias').textContent = C.cashAlias;
-      }
-    }
-  }
-
-  function populateGuestSuggestions() {
-    const dl = $('guest-suggestions');
-    if (!dl || typeof GUEST_LIST === 'undefined') return;
-    dl.innerHTML = '';
-    GUEST_LIST.forEach((g) => {
-      const opt = document.createElement('option');
-      opt.value = g.label;
-      dl.appendChild(opt);
-    });
-  }
-
-  function spawnLeaves() {
-    const host = $('leaves-bg');
-    const total = 9;
-    for (let i = 0; i < total; i++) {
-      const size = 14 + (i % 4) * 6;
-      const left = (i * 97) % 100;
-      const duration = 14 + (i % 5) * 4;
-      const delay = -(i * 3.4);
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  // Hojas decorativas y ?g= en el menú (no hay ninguna lógica de regalos).
+  (function () {
+    var host = document.getElementById('leaves-bg');
+    for (var i = 0; i < 9; i++) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '0 0 24 24');
       svg.setAttribute('fill', 'currentColor');
       svg.classList.add('leaf-float');
-      svg.style.left = left + '%';
-      svg.style.width = size + 'px';
-      svg.style.height = size + 'px';
-      svg.style.animationDuration = duration + 's';
-      svg.style.animationDelay = delay + 's';
+      svg.style.left = ((i * 97) % 100) + '%';
+      svg.style.width = svg.style.height = (14 + (i % 4) * 6) + 'px';
+      svg.style.animationDuration = (14 + (i % 5) * 4) + 's';
+      svg.style.animationDelay = (-(i * 3.4)) + 's';
       svg.innerHTML = '<path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/>';
       host.appendChild(svg);
     }
-  }
-
-  // ---------------------------------------------------------
-  // Identidad (compartida con la confirmación de asistencia: mismo
-  // ?g= en la URL que confirmar.html — sin localStorage, así que un
-  // link personalizado como regalos.html?g=familia-perez es la única
-  // forma de que el sitio detecte el grupo solo).
-  // ---------------------------------------------------------
-  function setUrlGuest(guestId) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('g', guestId);
-    window.history.replaceState(null, '', url.toString());
-  }
-
-  // Sin localStorage: la identidad sólo vive en el ?g= de la URL. Para
-  // que navegar por el menú no la pierda, reescribimos TODOS sus links
-  // con el mismo ?g= cada vez que cambia (applyGuestParamToNav viene
-  // de guests.js).
-  function updateNavLinks() {
-    applyGuestParamToNav(currentGuestId);
-  }
-
-  function showIdentified() {
-    $('identify-step').hidden = true;
-    $('identified-bar').hidden = false;
-    $('identified-label').textContent = currentLabel;
-  }
-
-  function showIdentifyStep() {
-    $('identify-step').hidden = false;
-    $('identified-bar').hidden = true;
-  }
-
-  function setIdentity(guestId, label) {
-    currentGuestId = guestId;
-    currentLabel = label || guestId;
-    setUrlGuest(guestId);
-    updateNavLinks();
-    showIdentified();
-  }
-
-  function clearIdentity() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('g');
-    window.history.replaceState(null, '', url.toString());
-    currentGuestId = null;
-    currentLabel = null;
-    $('identify-input').value = '';
-    showIdentifyStep();
-    updateNavLinks();
-    renderItems();
-  }
-
-  // Un link como regalos.html?g=familia-perez sólo trae el slug, no el
-  // nombre lindo ("Familia Pérez"). Lo resolvemos, en este orden: el
-  // label guardado en el backend si ese grupo ya confirmó asistencia
-  // (rsvps.json, vía confirmar.html), si no el de guests.js, y si no
-  // el texto crudo de la URL. La llamada al backend es de sólo lectura
-  // y no bloquea la UI — si encuentra algo mejor, actualiza el cartel.
-  async function refineLabelFromBackend(guestId) {
-    if (!isConfigured()) return;
-    try {
-      const url = APPS_SCRIPT_URL + '?action=get&guest=' + encodeURIComponent(guestId);
-      const res = await fetch(url);
-      const result = await res.json();
-      if (result.ok && result.exists && result.data && result.data.label && currentGuestId === guestId) {
-        currentLabel = result.data.label;
-        $('identified-label').textContent = currentLabel;
-      }
-    } catch (e) {
-      // Sin conexión o backend no configurado: nos quedamos con el
-      // label que ya teníamos (guests.js o el texto de la URL).
-    }
-  }
-
-  function identifyFrom(guestId, fallbackLabel) {
-    const preset = (typeof findGuestListEntry === 'function') ? findGuestListEntry(guestId) : null;
-    setIdentity(guestId, preset ? preset.label : fallbackLabel);
-    refineLabelFromBackend(guestId);
-  }
-
-  function initIdentity() {
-    const params = new URLSearchParams(window.location.search);
-    const urlGuest = params.get('g');
-
-    if (urlGuest) {
-      identifyFrom(slugifyGuestLabel(urlGuest), urlGuest);
-    } else {
-      showIdentifyStep();
-    }
-
-    $('identify-continue-btn').addEventListener('click', () => {
-      const raw = $('identify-input').value.trim();
-      if (!raw) return;
-      const guestId = slugifyGuestLabel(raw);
-      if (!guestId) return;
-      identifyFrom(guestId, raw);
-      renderItems();
-    });
-    $('identify-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); $('identify-continue-btn').click(); }
-    });
-    $('change-identity-btn').addEventListener('click', clearIdentity);
-  }
-
-  // ---------------------------------------------------------
-  // Backend
-  // ---------------------------------------------------------
-  async function fetchClaims() {
-    const url = APPS_SCRIPT_URL + '?action=claims';
-    const res = await fetch(url);
-    return res.json();
-  }
-
-  async function postClaimAction(payload) {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    return res.json();
-  }
-
-  async function loadClaims() {
-    if (!isConfigured()) return;
-    $('claims-status').textContent = CC.loading;
-    try {
-      const result = await fetchClaims();
-      claims = (result.ok && result.claims) ? result.claims : {};
-    } catch (err) {
-      claims = {};
-    }
-    claimsLoaded = true;
-    $('claims-status').textContent = '';
-    renderItems();
-  }
-
-  async function handleClaimClick(action, key) {
-    if (!currentGuestId || busyItem) return;
-    busyItem = key;
-    renderItems();
-    try {
-      const result = await postClaimAction({
-        action: action,
-        guest: currentGuestId,
-        label: currentLabel,
-        item: key
-      });
-      if (result.ok) {
-        claims = result.claims || claims;
-      } else {
-        $('claims-status').textContent = CC.error;
-      }
-    } catch (err) {
-      $('claims-status').textContent = CC.error;
-    }
-    busyItem = null;
-    renderItems();
-  }
-
-  // ---------------------------------------------------------
-  // Tarjetas de regalos
-  // ---------------------------------------------------------
-  function statusFor(key) {
-    const list = Array.isArray(claims[key]) ? claims[key] : [];
-    const mine = !!currentGuestId && list.some((c) => c.guest === currentGuestId);
-    const others = list.filter((c) => !currentGuestId || c.guest !== currentGuestId);
-    return { list, mine, others };
-  }
-
-  function cardHtml(item) {
-    const key = itemKey(item);
-    const link = item.link
-      ? '<a class="gift-link" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">' + escapeHtml(C.linkText) + '</a>'
-      : '';
-    const note = item.note ? '<p>' + escapeHtml(item.note) + '</p>' : '';
-
-    let statusText = '';
-    let statusClass = 'unclaimed';
-    let actionHtml = '';
-
-    if (!isConfigured()) {
-      statusText = '';
-    } else if (!claimsLoaded) {
-      statusText = CC.loading;
-    } else {
-      const { list, mine, others } = statusFor(key);
-      const saving = busyItem === key;
-
-      if (mine) {
-        statusText = CC.claimedByYou;
-        statusClass = 'mine';
-        actionHtml = '<button type="button" class="btn btn-outline claim-btn" data-action="unclaim" data-item="' +
-          escapeHtml(key) + '"' + (saving ? ' disabled' : '') + '>' +
-          escapeHtml(saving ? CC.saving : CC.unclaimButton) + '</button>';
-      } else if (others.length > 0) {
-        statusClass = 'claimed';
-        if (C.showClaimerName) {
-          statusText = others.length > 1
-            ? fillTemplate(CC.claimedByOtherAndMore, others[0].label)
-            : fillTemplate(CC.claimedByOther, others[0].label);
-        } else {
-          statusText = CC.claimedGeneric;
-        }
-      } else if (list.length === 0) {
-        statusClass = 'unclaimed';
-        statusText = CC.unclaimed;
-        if (currentGuestId) {
-          actionHtml = '<button type="button" class="btn btn-primary claim-btn" data-action="claim" data-item="' +
-            escapeHtml(key) + '"' + (saving ? ' disabled' : '') + '>' +
-            escapeHtml(saving ? CC.saving : CC.claimButton) + '</button>';
-        }
-      }
-    }
-
-    const statusHtml = statusText ? '<p class="gift-status ' + statusClass + '">' + escapeHtml(statusText) + '</p>' : '';
-
-    return '<div class="card gift-card">' +
-      '<svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z"/></svg>' +
-      '<h3>' + escapeHtml(item.name) + '</h3>' + note + link + statusHtml + actionHtml +
-      '</div>';
-  }
-
-  function renderItems() {
-    const items = C.items || [];
-    if (items.length === 0) {
-      $('empty-note').hidden = false;
-      $('empty-note').textContent = C.emptyNote;
-      $('gift-grid').innerHTML = '';
-      return;
-    }
-    $('empty-note').hidden = true;
-    $('gift-grid').innerHTML = items.map(cardHtml).join('');
-  }
-
-  function initGridClicks() {
-    $('gift-grid').addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      handleClaimClick(btn.dataset.action, btn.dataset.item);
-    });
-  }
-
-  // ---------------------------------------------------------
-  // Arranque
-  // ---------------------------------------------------------
-  document.addEventListener('DOMContentLoaded', () => {
-    applyStaticContent();
-    populateGuestSuggestions();
-    spawnLeaves();
-
-    if (!isConfigured()) {
-      $('setup-warning').style.display = 'block';
-    }
-
-    initIdentity();
-    initGridClicks();
-    renderItems();
-    loadClaims();
-  });
-})();
+    var g = getGuestParamFromUrl();
+    if (g) applyGuestParamToNav(g);
+  })();
 </script>
 </body>
 </html>

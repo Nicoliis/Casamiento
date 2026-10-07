@@ -90,8 +90,8 @@
   .field-block { margin-bottom: 14px; }
   .field-block:last-child { margin-bottom: 0; }
   .diet-other-input { margin-top: 8px; }
+  .name-label { font-family: var(--serif); font-size: 1.15rem; color: var(--forest); padding: 10px 0; }
 
-  #add-person-btn { width: 100%; margin-bottom: 22px; }
 
   #rsvp-status { text-align: center; margin-top: 14px; }
   .edit-hint {
@@ -159,11 +159,9 @@
     <form id="rsvp-form" hidden>
       <div class="confirming-for">
         <span><span id="txt-confirming-for"></span> <strong id="confirming-label"></strong></span>
-        <button type="button" class="btn-text" id="change-identity-btn"></button>
       </div>
 
       <div id="people-list"></div>
-      <button type="button" class="btn btn-outline" id="add-person-btn"></button>
 
       <div class="field-block">
         <label for="comments" id="lbl-comments"></label>
@@ -172,8 +170,8 @@
 
       <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%;justify-content:center;"></button>
       <div id="rsvp-status" class="status-msg"></div>
-      <p class="edit-hint" id="txt-edit-hint"></p>
-      <button type="button" class="btn-text" id="copy-link-btn"></button>
+      <p class="edit-hint" style="display: none;" id="txt-edit-hint"></p>
+      <button type="button" class="btn-text" style="display: none;" id="copy-link-btn"></button>
     </form>
   </div>
 </section>
@@ -192,7 +190,7 @@
   const C = CONTENT;
   const $ = (id) => document.getElementById(id);
 
-  const DIET_KEYS = ['vegan', 'vegetarian', 'celiac', 'lactose', 'other'];
+  const DIET_KEYS = ['vegan', 'vegetarian', 'celiac', 'lactose', 'hypertensive', 'other'];
 
   // ---------------------------------------------------------
   // Texto: aplica todo el contenido de content.js al DOM
@@ -220,8 +218,6 @@
     $('rsvp-loading').textContent = C.rsvp.loading;
 
     $('txt-confirming-for').textContent = C.rsvp.confirmingFor;
-    $('change-identity-btn').textContent = C.rsvp.changeIdentity;
-    $('add-person-btn').textContent = C.rsvp.addPerson;
     $('lbl-comments').textContent = C.rsvp.commentsLabel;
     $('comments').placeholder = C.rsvp.commentsPlaceholder;
     $('submit-btn').textContent = C.rsvp.submit;
@@ -311,7 +307,7 @@
     row.querySelector('.diet-other-input').hidden = !otherChecked;
   }
 
-  function createPersonRow(data) {
+  function createPersonRow(data, locked) {
     data = data || {};
     personCounter += 1;
     const rowId = 'person-' + personCounter;
@@ -332,18 +328,32 @@
     nameInput.placeholder = C.rsvp.namePlaceholder;
     nameInput.dataset.role = 'name';
     nameInput.value = data.name || '';
-    field.appendChild(nameInput);
+    // Grupo precargado: el nombre no se puede cambiar (salvo un
+    // "Acompañante" genérico, que el invitado completa) ni se puede
+    // quitar a nadie.
+    let nameLabel = null;
+    const isPlaceholder = /^acompa(ñ|n)ante$/i.test((data.name || '').trim());
+    if (locked && !isPlaceholder) {
+      nameLabel = document.createElement('div');
+      nameLabel.className = 'name-label';
+      nameLabel.dataset.role = 'name';
+      nameLabel.dataset.value = data.name || '';
+      nameLabel.textContent = data.name || '';
+    }
+    field.appendChild(nameLabel || nameInput);
     top.appendChild(field);
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'remove-person-btn';
-    removeBtn.textContent = '✕ ' + C.rsvp.removePerson;
-    removeBtn.addEventListener('click', () => {
-      if (document.querySelectorAll('.person-row').length <= 1) return;
-      row.remove();
-    });
-    top.appendChild(removeBtn);
+    if (!locked) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-person-btn';
+      removeBtn.textContent = '✕ ' + C.rsvp.removePerson;
+      removeBtn.addEventListener('click', () => {
+        if (document.querySelectorAll('.person-row').length <= 1) return;
+        row.remove();
+      });
+      top.appendChild(removeBtn);
+    }
     row.appendChild(top);
 
     // Asistencia
@@ -414,8 +424,8 @@
     return row;
   }
 
-  function addPersonRow(data) {
-    $('people-list').appendChild(createPersonRow(data));
+  function addPersonRow(data, locked) {
+    $('people-list').appendChild(createPersonRow(data, locked));
   }
 
   function collectPeople() {
@@ -425,7 +435,8 @@
     let missingAttendance = false;
 
     rows.forEach((row) => {
-      const name = row.querySelector('[data-role="name"]').value.trim();
+      const nameEl = row.querySelector('[data-role="name"]');
+      const name = (nameEl.dataset.value !== undefined ? nameEl.dataset.value : nameEl.value).trim();
       const pillGroup = row.querySelector('[data-role="attending"]');
       const attValue = pillGroup.dataset.value;
       if (!name) { missingName = true; return; }
@@ -517,7 +528,7 @@
       // Ya había una confirmación guardada para este grupo: la editamos.
       currentLabel = result.data.label || currentLabel;
       $('confirming-label').textContent = currentLabel;
-      result.data.people.forEach((p) => addPersonRow(p));
+      result.data.people.forEach((p) => addPersonRow(p, true));
       $('comments').value = result.data.comments || '';
       $('submit-btn').textContent = C.rsvp.update;
     } else {
@@ -529,27 +540,18 @@
         currentLabel = preset.label || currentLabel;
         $('confirming-label').textContent = currentLabel;
         const names = (preset.people && preset.people.length) ? preset.people : [''];
-        names.forEach((name) => addPersonRow({ name: name }));
+        names.forEach((name) => addPersonRow({ name: name }, !!preset.people.length));
       } else {
         addPersonRow({});
       }
       $('submit-btn').textContent = C.rsvp.submit;
     }
 
+
     $('rsvp-loading').hidden = true;
     $('rsvp-form').hidden = false;
   }
 
-  function resetIdentity() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('g');
-    window.history.replaceState(null, '', url.toString());
-    currentGuestId = null;
-    currentLabel = null;
-    $('identify-input').value = '';
-    showIdentifyStep();
-    updateNavLinks();
-  }
 
   function initRsvpFlow() {
     if (!isConfigured()) {
@@ -579,9 +581,7 @@
       if (e.key === 'Enter') { e.preventDefault(); $('identify-continue-btn').click(); }
     });
 
-    $('change-identity-btn').addEventListener('click', resetIdentity);
 
-    $('add-person-btn').addEventListener('click', () => addPersonRow({}));
 
     $('copy-link-btn').addEventListener('click', async () => {
       try {

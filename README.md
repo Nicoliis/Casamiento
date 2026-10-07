@@ -10,15 +10,15 @@ invitados no necesitan iniciar sesión en Google.
 
 | Archivo | Qué es |
 |---|---|
-| `Code.gs` | Backend (Google Apps Script). Lee/escribe `rsvps.json` y `regalos.json` en tu carpeta de Drive. |
+| `Code.gs` | Backend (Google Apps Script). Lee/escribe `rsvps.json` en tu carpeta de Drive. |
 | `config.js` | Un solo lugar con la URL de tu Web App de Apps Script. |
-| `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, la lista de regalos, etc. Editá solo este archivo para cambiar palabras. |
+| `content.js` | **Todo el texto en español del sitio** — nombres, fechas, lugares, textos de los botones, etc. Editá solo este archivo para cambiar palabras. |
 | `guests.js` | Lista opcional de familias/grupos invitados, para precargar nombres y ver quién no respondió. |
 | `theme.css` | Paleta de colores y estilos compartidos (verde/naturaleza) — incluye el menú de navegación, compartido por todas las páginas. |
 | `index.html` | La invitación pública: portada, ceremonia/recepción y código de vestimenta. |
 | `confirmar.html` | Formulario de confirmación de asistencia (RSVP), en su propia página. |
 | `confirmados.html` | Panel privado (con contraseña) que agrega todas las confirmaciones recibidas, más los grupos que todavía no respondieron. |
-| `regalos.html` | Lista de regalos / ideas para el casamiento, con reserva por grupo. |
+| `regalos.html` | Lista de regalos (página estática, con instrucciones). |
 | `fotos.html` | Página con el código QR para subir fotos durante la fiesta. |
 
 Todas las páginas públicas (`index.html`, `confirmar.html`, `regalos.html`,
@@ -42,8 +42,11 @@ adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
   igual: el sitio detecta el `?g=` de la URL y salta directo al formulario.
 - Un mismo link puede confirmar **varias personas** (pareja, familia con
   hijos), cada una con su propia asistencia y restricciones alimentarias.
-- Esa misma identidad (el slug del `?g=`) es la que se usa para reservar
-  regalos en `regalos.html?g=familia-perez`.
+- Si el grupo ya está cargado en `rsvps.json` (Drive), los nombres quedan
+  **bloqueados**: nadie puede editarlos, agregar ni quitar personas — solo
+  marcar asistencia y restricciones (única excepción: un nombre
+  "Acompañante" genérico se puede completar). El backend lo hace cumplir
+  también, no solo la página.
 - **El `?g=` viaja solo por todo el menú**, en las cuatro páginas
   públicas: si entrás con `?g=familia-perez` a cualquiera de ellas, todos
   los links del menú de arriba (Inicio, Ceremonia, Recepción, Confirmar,
@@ -62,8 +65,8 @@ adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
 > vez que pegás este archivo en script.google.com, **pisás** lo que
 > tenías puesto ahí antes — tenés que volver a escribir tus valores
 > reales todas las veces, no es "una vez y ya está". Si te olvidás, el
-> backend entero deja de funcionar (RSVP, panel de admin, reserva de
-> regalos — todo), aunque el sitio se vea normal.
+> backend entero deja de funcionar (RSVP y panel de admin),
+> aunque el sitio se vea normal.
 
 1. Abrí tu proyecto en [script.google.com](https://script.google.com).
 2. Reemplazá todo el contenido por el nuevo `Code.gs`.
@@ -78,7 +81,7 @@ adapta solo en pantallas chicas (pasa a 2 líneas en vez de desbordar).
 6. Probá que haya quedado bien: abrí esta URL en el navegador (reemplazando
    por tu URL real de `config.js`) y confirmá que la respuesta sea
    `{"ok":true,...}` y no un error:
-   `TU_URL_DE_APPS_SCRIPT/exec?action=claims`
+   `TU_URL_DE_APPS_SCRIPT/exec?action=get&guest=prueba`
 
 > Si en algún momento creás un deployment nuevo (no una nueva versión del
 > mismo), la URL cambia y hay que actualizar `config.js`.
@@ -132,51 +135,13 @@ el sitio arranca una confirmación nueva para esa persona/familia como
 siempre. `guests.js` sólo agrega la precarga y el seguimiento — para
 agregar o quitar un grupo, sumás o borrás un objeto de la lista.
 
-## Lista de regalos con reserva (`regalos.html`)
+## Lista de regalos (`regalos.html`)
 
-El contenido vive en `content.js` → `CONTENT.wishlist`. Para agregar o
-quitar una idea de regalo, sumá o borrá un objeto de `wishlist.items`:
-
-```js
-{ key: 'sabanas', name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' }
-```
-
-`link` es opcional (por ejemplo a una tienda online); si lo dejás vacío, la
-tarjeta se muestra sin botón. `key` es el identificador estable del
-regalo — una vez que alguien lo reservó, no le cambies el `key` (podés
-cambiar `name`, `note` y `link` libremente). También hay un bloque
-opcional para un regalo en efectivo (`wishlist.cashText` /
-`wishlist.cashAlias`) — si los dejás vacíos, esa tarjeta no se muestra.
-
-**Reservas por grupo:** cada invitado se identifica con el mismo `?g=` de
-la URL que usa para confirmar asistencia (no hay `localStorage` de por
-medio — ver la sección anterior). Un link personalizado como
-`regalos.html?g=familia-perez` (el mismo slug que
-`confirmar.html?g=familia-perez`) identifica al grupo automáticamente. El
-nombre lindo para mostrar ("Familia Pérez", no "familia-perez") se
-resuelve así: si ese grupo ya confirmó asistencia, se trae su `label`
-guardado en `rsvps.json`; si no, se busca en `guests.js`; si tampoco está
-ahí, se usa el texto tal cual venga en la URL.
-
-Desde ahí puede reservar un regalo — que otros grupos van a ver como
-"Reservado por Familia X" — y deshacer la reserva si se arrepiente. Las
-reservas se guardan en `regalos.json` en tu carpeta de Drive (igual que
-`rsvps.json`), así que se ven iguales para todos los que entren al sitio,
-no sólo en el navegador de quien reservó.
-
-Si dos grupos llegan a reservar el mismo regalo casi al mismo tiempo, el
-sitio guarda ambas reservas (no descarta ninguna) y te lo marca como
-conflicto — mirá la sección "Regalos reservados" en `confirmados.html`
-para verlo y coordinar con ellos manualmente. Es un caso raro gracias a
-un lock en el backend, pero puede pasar.
-
-Si preferís que no se muestre el nombre de quién reservó cada regalo
-(sólo "ya fue reservado" / "libre"), poné `wishlist.showClaimerName` en
-`false` en `content.js`.
-
-> Esta función necesita la versión nueva de `Code.gs` (ver "Backend" más
-> abajo) — sin redeployarla, `regalos.html` va a mostrar los regalos
-> pero el botón de reservar no va a hacer nada.
+Es una página **estática**: no usa backend ni identidad, no se reserva
+nada. Para cambiar los regalos, las instrucciones o el alias para
+efectivo, editá directamente el HTML de `regalos.html` (cada regalo es un
+bloque `<div class="card gift-card">`; el link "Ver →" es opcional y se
+borra con su `<a>`).
 
 ## Código QR para subir fotos (`fotos.html`)
 
@@ -217,7 +182,7 @@ Si preferís que no se muestre el nombre de quién reservó cada regalo
 ```
 
 Restricciones alimentarias soportadas: `vegan`, `vegetarian`, `celiac`,
-`lactose`, `other` (con texto libre). Se editan/traducen desde
+`lactose`, `hypertensive`, `other` (con texto libre). Se editan/traducen desde
 `content.js` → `rsvp.dietOptions`.
 
 ## Notas

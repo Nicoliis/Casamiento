@@ -57,12 +57,15 @@ const CONTENT = {
     time: '20:00 hs',
     place: 'Salon Rosedal',
     address: 'Av. Gral José María Zapiola 2722, Paso del rey',
-    mapsUrl: 'https://maps.app.goo.gl/B9g1z3bLf8cNNg5F7'
+    mapsUrl: 'https://maps.app.goo.gl/B9g1z3bLf8cNNg5F7',
+    carEntranceLabel: 'Entrada de vehiculos',
+    carEntranceMapsUrl: 'https://maps.app.goo.gl/xyMSPEfLhmNoJfyv8'
   },
 
   dressCode: {
     title: 'Código de vestimenta',
-    text: 'Elegante sport. Te pedimos evitar el blanco, ¡Ese color nos lo dejamos para nosotros! 😉'
+    text: 'Elegante sport. Te pedimos evitar el blanco.',
+    text2: '¡Ese color se lo dejamos a la novia! 😉'
   },
 
   identify: {
@@ -78,7 +81,6 @@ const CONTENT = {
     intro: 'Contanos quiénes vendrán y si tienen alguna necesidad especial en la comida.',
     deadlineText: 'Por favor confirmá antes del 1 de octubre de 2026.',
     confirmingFor: 'Confirmando para:',
-    changeIdentity: '¿No sos vos? Cambiar',
     namePlaceholder: 'Nombre y apellido',
     attendingLabel: '¿Asistirá?',
     yes: 'Sí, asistiré',
@@ -89,10 +91,10 @@ const CONTENT = {
       vegetarian: 'Vegetariano/a',
       celiac: 'Celíaco/a (sin TACC)',
       lactose: 'Intolerante a la lactosa',
+      hypertensive: 'Hipertenso/a (bajo en sodio)',
       other: 'Otra'
     },
     dietOtherPlaceholder: 'Contanos cuál',
-    addPerson: '+ Agregar otra persona',
     removePerson: 'Quitar',
     commentsLabel: 'Comentarios u otras especificaciones',
     commentsPlaceholder: 'Alergias adicionales, necesidades de accesibilidad, silla para bebé, etc.',
@@ -115,56 +117,6 @@ const CONTENT = {
   },
 
   // ------------------------------------------------------------
-  // Página de regalos (regalos.html). Para agregar o quitar una
-  // idea de regalo, sumá o borrá un objeto de "items".
-  //   key  -> identificador estable del regalo (sin espacios ni
-  //           tildes). Es lo que guarda quién lo reservó, así que
-  //           una vez que un item tiene reservas NO le cambies el
-  //           key (podés cambiar el "name" y el resto libremente).
-  //   link -> opcional, a una tienda online. Se puede dejar vacío.
-  // Cada invitado se identifica (igual que en la confirmación) y
-  // puede "reservar" un regalo para que los demás vean que ya está
-  // cubierto — y deshacer la reserva si se arrepiente.
-  // ------------------------------------------------------------
-  wishlist: {
-    title: 'Lista de regalos',
-    kicker: 'CON CARIÑO',
-    intro: 'Lo más importante para nosotros es compartir este día con vos. Si además querés hacernos un regalo, te dejamos algunas ideas — reservá la que quieras para que no se repita.',
-    linkText: 'Ver →',
-    items: [
-      { key: 'sabanas', name: 'Juego de sábanas', note: 'Talle queen, blancas o lino natural', link: '' },
-      { key: 'vajilla', name: 'Vajilla', note: 'Set de platos color blanco o crudo', link: 'https://ejemplo.com' },
-    ],
-    emptyNote: 'Todavía no cargamos ideas por acá — ¡pronto vamos a sumar algunas!',
-    cashTitle: 'Un gesto en efectivo',
-    cashText: '',
-    cashAlias: '',
-
-    // Si es false, las tarjetas sólo dicen "reservado" sin decir por
-    // quién (igual sabés vos si fuiste vos el que reservó).
-    showClaimerName: true,
-
-    claim: {
-      identifyTitle: '¿Quién sos?',
-      identifyText: 'Ingresá tu nombre o el de tu familia para poder reservar regalos.',
-      placeholder: 'Ej: Familia Pérez',
-      continue: 'Continuar',
-      reservingAs: 'Reservando como:',
-      changeIdentity: '¿No sos vos? Cambiar',
-      loading: 'Cargando reservas…',
-      claimButton: 'Lo llevamos nosotros',
-      unclaimButton: 'Deshacer reserva',
-      claimedByYou: '¡Lo reservaste vos!',
-      claimedByOther: 'Reservado por {label}',
-      claimedByOtherAndMore: 'Reservado por {label} y otro grupo más',
-      claimedGeneric: 'Ya fue reservado',
-      unclaimed: 'Todavía nadie lo reservó',
-      saving: 'Guardando…',
-      error: 'Algo salió mal, probá de nuevo.'
-    }
-  },
-
-  // ------------------------------------------------------------
   // Página para subir fotos durante la fiesta (fotos.html).
   // "fallbackUrl": si ya tenés el link del álbum, pegalo acá y el
   // botón "Ir al álbum" lo va a usar directamente. Si lo dejás
@@ -173,7 +125,7 @@ const CONTENT = {
   photos: {
     title: 'Compartí tus fotos',
     kicker: 'DURANTE LA FIESTA',
-    intro: 'Escaneá este código con la cámara de tu celular para subir las fotos y videos que saques en la fiesta.',
+    intro: 'Escaneá este código con la cámara de tu celular para subir las fotos que saques en la fiesta. ¡Queremos verlas todas!. Entre mas fotos subamos, más divertido va a ser el álbum final.',
     qrAlt: 'Código QR para subir fotos',
     qrMissingText: 'Todavía no subimos el código QR. Guardalo como qr-fotos.png en esta misma carpeta.',
     scanningText: 'Buscando el link dentro del código…',
@@ -209,13 +161,6 @@ const CONTENT = {
     refresh: '↻ Actualizar',
     empty: 'Todavía no hay confirmaciones.',
     yes: 'Sí',
-    no: 'No',
-
-    giftsTitle: 'Regalos reservados',
-    tableGift: 'Regalo',
-    giftsClaimedBy: 'Reservado por',
-    giftsUnclaimed: 'Sin reservar',
-    giftsConflict: '⚠ Reservado por más de un grupo — coordinalos vos',
-    giftsEmpty: 'Todavía no cargaste regalos en content.js.'
+    no: 'No'
   }
 };

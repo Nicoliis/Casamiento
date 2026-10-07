@@ -191,6 +191,8 @@
       <p id="rec-place"></p>
       <p id="rec-address"></p>
       <a class="maps-link" id="rec-maps" href="#" target="_blank" rel="noopener">Ver en el mapa →</a>
+      <p id="rec-car-label" style="margin-top:14px;"></p>
+      <a class="maps-link" id="rec-car-maps" href="#" target="_blank" rel="noopener">Ver en el mapa →</a>
     </div>
   </div>
 </section>
@@ -198,6 +200,7 @@
 <section class="section reveal dress-code" id="recepcion">
   <h3 id="dress-title"></h3>
   <p id="dress-text"></p>
+  <p id="dress-text2"></p>
 </section>
 
 <footer>
@@ -253,9 +256,12 @@
     $('rec-place').textContent = C.reception.place;
     $('rec-address').textContent = C.reception.address;
     $('rec-maps').href = C.reception.mapsUrl;
+    $('rec-car-label').textContent = C.reception.carEntranceLabel;
+    $('rec-car-maps').href = C.reception.carEntranceMapsUrl;
 
     $('dress-title').textContent = C.dressCode.title;
     $('dress-text').textContent = C.dressCode.text;
+    $('dress-text2').textContent = C.dressCode.text2;
 
     $('txt-footer-thanks').textContent = C.footer.thanks;
     $('txt-footer-signature').textContent = C.footer.signature;

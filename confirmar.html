@@ -462,14 +462,30 @@
   // ---------------------------------------------------------
   // Backend
   // ---------------------------------------------------------
+  // Apps Script a veces contesta con una página HTML de error (cuota,
+  // sobrecarga, reinicio) en vez de JSON. Es pasajero: reintentamos.
+  async function withRetry(fn) {
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastErr = err;
+        if (!/JSON|Unexpected token/i.test(String(err && err.message))) throw err;
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+    throw lastErr;
+  }
+
   async function fetchGuest(guestId) {
-    const data = await drivestore.getFile('rsvp-' + guestId);
+    const data = await withRetry(() => drivestore.getFile('rsvp-' + guestId));
     return { ok: true, exists: !!data, data: data };
   }
 
   async function saveGuest(payload) {
     const record = Object.assign({}, payload, { updatedAt: new Date().toISOString() });
-    await drivestore.pushFile('rsvp-' + payload.guest, record);
+    await withRetry(() => drivestore.pushFile('rsvp-' + payload.guest, record));
     return { ok: true, data: record };
   }
 

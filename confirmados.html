@@ -38,10 +38,13 @@
     border-radius: var(--radius-sm);
     padding: 12px 16px;
     font-family: var(--sans);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
     font-size: 0.9rem;
   }
   #pending-list li strong { color: var(--forest); font-family: var(--serif); font-size: 1.05rem; display: block; }
   #pending-list li span { color: var(--muted); font-size: 0.8rem; }
+  #pending-list .copy-link-btn { flex: none; font-family: var(--sans); font-size: 0.8rem; padding: 8px 12px; border: 1px solid var(--sage-light); border-radius: var(--radius-sm); background: var(--cream-deep); color: var(--forest); cursor: pointer; }
+  #pending-list .copy-link-btn.copied { color: var(--ok); border-color: var(--ok); }
   .pending-hint { color: var(--muted); font-family: var(--sans); font-size: 0.85rem; }
   .stat { text-align: center; padding: 18px 10px; }
   .stat strong { display: block; font-size: 2rem; color: var(--forest); font-family: var(--serif); }
@@ -275,7 +278,8 @@
       .map((g) => {
         const names = (g.people && g.people.length) ? escapeHtml(g.people.join(', ')) : '';
         const namesLine = names ? '<span>' + names + ' (' + escapeHtml(CONTENT.admin.pendingPeopleLabel) + ')</span>' : '';
-        return '<li><strong>' + escapeHtml(g.label) + '</strong>' + namesLine + '</li>';
+        return '<li><div><strong>' + escapeHtml(g.label) + '</strong>' + namesLine + '</div>' +
+          '<button type="button" class="copy-link-btn" data-slug="' + escapeHtml(getGuestSlug(g)) + '">' + escapeHtml(CONTENT.admin.copyLink) + '</button></li>';
       })
       .join('');
     $('pending-empty').hidden = pending.length > 0;
@@ -366,6 +370,21 @@
       if (result.ok) render(result.rsvps);
     });
     $('export-csv-btn').addEventListener('click', exportCsv);
+
+    $('pending-list').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.copy-link-btn');
+      if (!btn) return;
+      const link = new URL('confirmar.html?g=' + encodeURIComponent(btn.dataset.slug), window.location.href).href;
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch (err) {
+        window.prompt(CONTENT.admin.copyLinkFallback, link);
+        return;
+      }
+      btn.textContent = CONTENT.admin.linkCopied;
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = CONTENT.admin.copyLink; btn.classList.remove('copied'); }, 1800);
+    });
 
     const remembered = sessionStorage.getItem('weddingAdminPass');
     if (remembered) {

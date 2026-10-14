@@ -131,7 +131,7 @@ const CONTENT = {
     scanningText: 'Buscando el link dentro del código…',
     decodeErrorText: 'No pudimos leer el link del código automáticamente. ¡Igual podés escanearlo con la cámara!',
     buttonText: 'Ir al álbum →',
-    fallbackUrl: ''
+    fallbackUrl: 'https://get.celebrate.app/iwWrgbKYCS8RrtYo9'
   },
 
   admin: {

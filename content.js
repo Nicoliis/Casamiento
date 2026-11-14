@@ -13,7 +13,7 @@ const CONTENT = {
   },
 
   // Fecha y hora del evento, formato ISO. Se usa para la cuenta regresiva.
-  eventDateISO: '2026-12-12T15:00:00',
+  eventDateISO: '2026-12-12T20:00:00',
 
   hero: {
     kicker: 'NOS CASAMOS',
@@ -46,7 +46,7 @@ const CONTENT = {
 
   ceremony: {
     title: 'Ceremonia',
-    time: '19:00 hs',
+    time: '20:00 hs',
     place: 'Parroquia Santa María de Guadalupe',
     address: 'Molina campos 371, Moreno',
     mapsUrl: 'https://maps.app.goo.gl/pxXjiWKZK1WZ4xS78'
@@ -54,7 +54,7 @@ const CONTENT = {
 
   reception: {
     title: 'Recepción',
-    time: '20:00 hs',
+    time: '21:00 hs',
     place: 'Salon Rosedal',
     address: 'Av. Gral José María Zapiola 2722, Paso del rey',
     mapsUrl: 'https://maps.app.goo.gl/B9g1z3bLf8cNNg5F7',

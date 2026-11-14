@@ -146,9 +146,9 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="content.js"></script>
-<script src="guests.js"></script>
+<script src="config.js?v=2"></script>
+<script src="content.js?v=2"></script>
+<script src="guests.js?v=2"></script>
 <script>
 (function () {
   'use strict';
@@ -332,15 +332,15 @@
   function exportCsv() {
     if (!latestRsvps) return;
     const rows = [['Grupo', 'Nombre', 'Asiste', 'Restricciones', 'Comentarios', 'Actualizado']];
-    Object.values(latestRsvps).filter(hasAnswered).forEach((party) => {
-      party.people.forEach((p) => {
+    Object.values(latestRsvps).forEach((party) => {
+      (party.people || []).forEach((p) => {
         rows.push([
           party.label || party.guest,
           p.name,
-          p.attending ? C.yes : C.no,
+          typeof p.attending === 'boolean' ? (p.attending ? C.yes : C.no) : C.noAnswer,
           dietLabel(p),
           party.comments || '',
-          formatDate(party.updatedAt)
+          party.updatedAt ? formatDate(party.updatedAt) : ''
         ]);
       });
     });

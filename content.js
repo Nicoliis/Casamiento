@@ -165,6 +165,7 @@ const CONTENT = {
     refresh: '↻ Actualizar',
     empty: 'Todavía no hay confirmaciones.',
     yes: 'Sí',
-    no: 'No'
+    no: 'No',
+    noAnswer: 'Sin respuesta'
   }
 };
